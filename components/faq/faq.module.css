@@ -1,5 +1,26 @@
 /* ---------- FAQ ---------- */
 
+/*
+ * Полоса FAQ тает к финалу дольше общего .band: у стыка с «Город ждёт»
+ * стандартный хвост (55% → 0 за 92px) читался ступенькой. Здесь туман
+ * расходится на 300px — тремя мягкими уступами, без резкого обрыва.
+ * Верхняя кромка — как у системы (перекрывается по порядку импортов:
+ * faq.module.css идёт после shared в бандле).
+ */
+.faqSec {
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0,
+      color-mix(in srgb, var(--bg-2) 55%, transparent) 92px,
+      var(--bg-2) 200px,
+      var(--bg-2) calc(100% - 300px),
+      color-mix(in srgb, var(--bg-2) 42%, transparent) calc(100% - 170px),
+      color-mix(in srgb, var(--bg-2) 14%, transparent) calc(100% - 60px),
+      transparent 100%
+    );
+}
+
 .qaWrap {
   max-width: 860px;
 }

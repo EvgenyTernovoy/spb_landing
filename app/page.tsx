@@ -16,9 +16,9 @@ import { FinaleSeam, Seam } from "@/components/decor";
 import TopBar from "@/components/top-bar/TopBar";
 import Hero from "@/components/hero/Hero";
 import LoreLine from "@/components/lore/LoreLine";
+import Demo from "@/components/demo/Demo";
 import HowPlay from "@/components/how-play/HowPlay";
 import Case from "@/components/case/Case";
-import Demo from "@/components/demo/Demo";
 import Chars from "@/components/chars/Chars";
 import Audience from "@/components/audience/Audience";
 import Faq from "@/components/faq/Faq";
@@ -37,15 +37,15 @@ export default function LandingPage() {
       <Hero />
       {/* Строка лора + радужный разделитель: дань whimsy */}
       <LoreLine />
-      {/* 02. КАК ИГРАТЬ: станции на живом следе */}
-      <HowPlay />
+      {/* 02. ДЕМО: интерактивная панорама места происшествия в телефоне */}
+      <Demo />
       {/* Швы-волны: дорога ведёт читателя, у каждого шва свой оттенок и фаза */}
       <Seam hue="var(--periwinkle)" variant={0} />
-      {/* 03. СЦЕНАРИЙ: что внутри дела №1 — карта, улики, допросы */}
-      <Case />
+      {/* 03. КАК ИГРАТЬ: станции на живом следе */}
+      <HowPlay />
       <Seam hue="var(--pink)" variant={1} flip />
-      {/* 04. ДЕМО: интерактивная панорама в горизонтальном телефоне */}
-      <Demo />
+      {/* 04. СЦЕНАРИЙ: что внутри дела №1 — карта, улики, допросы */}
+      <Case />
       <Seam hue="var(--lavender)" variant={0} />
       {/* 05. СЫЩИКИ: полароиды из досье, приклеены к ночи */}
       <Chars />

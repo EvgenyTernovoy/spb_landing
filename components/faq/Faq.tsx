@@ -34,7 +34,7 @@ export default function Faq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className={`${shared.section} ${shared.band}`} id="faq" ref={faqRef}>
+    <section className={`${shared.section} ${shared.band} ${styles.faqSec}`} id="faq" ref={faqRef}>
       <div className={`${shared.wrap} ${styles.qaWrap}`}>
         <h2 className={`${shared.h2} ${styles.qaH2} ${shared.rv}`}>Вопросы</h2>
         <div className={styles.qa}>

@@ -53,9 +53,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         ? document.activeElement
         : null;
     dlg.showModal();
-    /* ночь под туманом не скроллится; фокус — на главном действии */
+    /* ночь под туманом не скроллится. Фокус намеренно не переводим
+     * на поле: на мобильных автофокус сразу поднимает клавиатуру
+     * и заслоняет лист; showModal() сам фокусирует <dialog>, поле
+     * достижимо табом */
     document.documentElement.style.overflow = "hidden";
-    dlg.querySelector<HTMLElement>("[data-wishlist-focus]")?.focus();
   }, []);
 
   const closeWishlist = useCallback(() => {
@@ -211,7 +213,6 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
                       autoComplete="email"
                       inputMode="email"
                       placeholder="ваша@почта.ру"
-                      data-wishlist-focus
                     />
                     <button type="submit" className={styles.wish}>
                       Получить
