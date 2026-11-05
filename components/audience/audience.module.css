@@ -1,0 +1,152 @@
+/*
+ * 06. ДЛЯ КОГО — четыре визитки на столе сыщика. Тихая секция перед
+ * FAQ: ни кликов, ни rAF — пружины входа, штриховые иконки, которые
+ * рисует скролл, и рукописные слоганы в цвете карточки.
+ *
+ * --tint — цвет карточки (инлайн), --rv — задержка входа в каскаде.
+ */
+
+.deck {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.2rem, 2.5vw, 1.9rem);
+}
+
+/*
+ * Карточка-«визитка»: статья — неподвижная зона ховера и носитель
+ * входа. Задержка каскада --rv стоит только на ней (ховеров на статье
+ * нет — каскад не тянется в ховер), вся жизнь — на внутреннем .cardIn
+ * (урок полароидов: бокс не двигается под курсором у края).
+ */
+.card {
+  display: flex;
+  transition-delay: var(--rv, 0ms);
+}
+
+.cardIn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--edge);
+  border-radius: 20px;
+  padding: clamp(1.3rem, 2.5vw, 1.7rem);
+  transition:
+    transform var(--dur-ui) var(--spring-soft),
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .cardIn {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+    border-color: color-mix(in srgb, var(--tint) 45%, var(--edge));
+  }
+}
+
+/* ---------- ИКОНКА ---------- */
+
+/*
+ * Штриховая иконка в цвете карточки: рисует себя на скролле (ниже),
+ * на ховере зажигается цветным ореолом — слой света живёт и в покое.
+ */
+.icon {
+  display: block;
+  width: clamp(42px, 4.5vw, 50px);
+  margin-bottom: 1rem;
+  color: var(--tint);
+  transition: filter 0.25s ease;
+}
+
+.icon svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .icon {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--tint) 40%, transparent));
+  }
+}
+
+/* ---------- ТЕКСТ ВИЗИТКИ ---------- */
+
+.who {
+  margin: 0 0 0.4rem;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* Слоган — голос руки (signature whimsy): приписка детектива на визитке */
+.pitch {
+  margin: 0;
+  font-family: var(--f-hand), cursive;
+  font-size: clamp(1.2rem, 1.7vw, 1.38rem);
+  line-height: 1.32;
+  color: var(--tint);
+}
+
+/* ---------- СКРОЛЛ-ТАЙМЛАЙН: ИКОНКИ ---------- */
+
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Штрихи иконки рисуют себя при входе — как секундомер «Сценария»;
+     * 100 1000 + 103 — без «огоньков» на концах (гоча round-cap) */
+    .icon svg :is(path, circle, rect) {
+      stroke-dasharray: 100 1000;
+      stroke-dashoffset: 103;
+      animation-name: trace;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 55%;
+    }
+
+    .icon svg > *:nth-child(2) {
+      animation-range: entry 8% entry 65%;
+    }
+
+    .icon svg > *:nth-child(3) {
+      animation-range: entry 11% entry 75%;
+    }
+
+    .icon svg > *:nth-child(4) {
+      animation-range: entry 14% entry 85%;
+    }
+  }
+}
+
+/* ---------- АДАПТИВ ---------- */
+
+@media (max-width: 1080px) {
+  .deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .deck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cardIn,
+  .icon {
+    transition: none;
+  }
+}

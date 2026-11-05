@@ -1,0 +1,603 @@
+/*
+ * Общая земля лендинга «Дружелюбный нуар»: токены игры «Загадочный СПБ»
+ * (ночь #0f172a, синий #3b82f6, магия #8b5cf6, золото #e8c87a, цвета классов),
+ * жизнь и формы — подходы whimsy.joshwcomeau.com: пилюли, жёлтый пунктирный
+ * фокус, пружины-токены, тонированные тени, рукописные пометки Neucha,
+ * звёзды и искры, золотой градиент для «главной» вещи.
+ * Имена переменных: --periwinkle = синий игры, --pink = магический сиреневый,
+ * --lavender = золото куполов.
+ * Z-шкала: 0 город, 1 затемнение/туман/звёзды/частицы, 2 свупы, 3 текст
+ * героя, 5 карточка улики, 100 шапка, 110 зерно.
+ * Шрифты (--f-text, --f-hand, --f-script, --f-mono) приходят из app/layout.tsx.
+ *
+ * Здесь живёт то, что принадлежит нескольким секциям: оболочка .page,
+ * каркас секций (.section/.wrap/.band/.secHead), заголовки с сквигглом,
+ * кнопки-пилюли, звёзды, слоты и механизм появления .rv. Стиль конкретной
+ * секции — в её папке (components/<секция>/<секция>.module.css).
+ */
+
+.page {
+  /*
+   * Земля и стены — токены игры «Загадочный СПБ»
+   * (packages/client/src/index.css): ночь #0f172a, карточки #1e293b.
+   */
+  --bg: #0f172a;
+  --bg-2: #1e293b;
+  --bg-3: #263349;
+  --edge: #334155;
+  --edge-2: #475569;
+  --text: #f8fafc;
+  --mist: #94a3b8;
+  /* 4.5:1+ на ночи — здесь живут информационные подписи (номера дел, шаги) */
+  --mist-2: #7d8aa5;
+
+  /*
+   * Живые акценты: синий и магический сиреневый — из палитры игры,
+   * золото куполов — имперский акцент игры. Формы и жизнь — от whimsy.
+   */
+  --periwinkle: #60a5fa;
+  --pink: #a78bfa;
+  --lavender: #e8c87a;
+  --action: #3b82f6;
+  --action-2: #2563eb;
+  --steel: hsl(200 60% 66%);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --focus: hsl(50 100% 50%);
+
+  /* Премиум: золото как у whimsy для «главной» вещи */
+  --golden: linear-gradient(-230deg, #ffde00, #ff8a00);
+
+  /* Бумага досье — тёплая, как иллюстрации whimsy */
+  --paper: #f2e9d8;
+  --paper-2: #e3d6bd;
+  --ink: #2b2620;
+  --ink-2: #6f6048;
+  --rule: #c4b493;
+  --stamp: hsl(35 100% 52%);
+
+  /* Классы сыщиков: цвета класса из игры, лента + глубокая подпись */
+  --c-detective: #3b82f6;
+  --c-witch: #a855f7;
+  --c-criminalist: #10b981;
+  --c-thief: #f97316;
+  --cd-detective: #1d4ed8;
+  --cd-witch: #7e22ce;
+  --cd-criminalist: #047857;
+  /* 6:1 на бумаге досье (было #c2410c — 4.3:1, мало для 9.5px) */
+  --cd-thief: #9a3412;
+
+  /* Тени тонированы в фон (подход whimsy: --shadow-color = hue земли) */
+  --shadow-color: 222 47% 9%;
+  --shadow-low: 0 0.5px 1px hsl(var(--shadow-color) / 0.5),
+    0 2px 5px hsl(var(--shadow-color) / 0.45);
+  --shadow-medium: 0 1px 2px hsl(var(--shadow-color) / 0.5),
+    0 6px 14px hsl(var(--shadow-color) / 0.5),
+    0 14px 34px hsl(var(--shadow-color) / 0.45);
+
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Длительности микро/UI — тоже токены (микро 50–150мс, UI 200–400мс) */
+  --dur-micro: 150ms;
+  --dur-ui: 350ms;
+
+  /*
+   * Пружины — дизайн-токены, снятые с whimsy.joshwcomeau.com.
+   * База — cubic-bezier, в @supports ниже заменяется на linear().
+   */
+  --spring-soft: cubic-bezier(0.217, 0.903, 0, 1.006);
+  --spring-soft-duration: 667ms;
+  --spring: cubic-bezier(0.17, 0.67, 0.36, 0.99);
+  --spring-duration: 833ms;
+  --spring-bouncy: cubic-bezier(0, 0.67, 0.6, 1.24);
+  --spring-bouncy-duration: 900ms;
+
+  color-scheme: dark;
+  position: relative;
+  overflow-x: clip;
+  min-height: 100svh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--f-text), "Trebuchet MS", sans-serif;
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+
+/* Живая пружина: перерисовка затухания через linear() */
+@supports (animation: linear(0, 1)) {
+  .page {
+    --spring-soft: linear(
+      0, 0.005, 0.02 2.3%, 0.081 5%, 0.463 16.6%, 0.558, 0.639, 0.71,
+      0.77 29.7%, 0.821, 0.864 37.1%, 0.902 41.5%, 0.932 46.4%, 0.956 51.9%,
+      0.973 58.1%, 0.985 65.2%, 0.992 73.8%, 0.997 84.7%, 0.999
+    );
+    --spring: linear(
+      0, 0.012 0.9%, 0.049 2%, 0.409 9.3%, 0.513 11.9%, 0.606 14.7%,
+      0.691 17.9%, 0.762 21.3%, 0.82 25%, 0.868 29.1%, 0.907 33.6%,
+      0.937 38.7%, 0.976 51.3%, 0.994 68.8%, 1
+    );
+    /* Настоящая «жёсткая» пружина whimsy: выброс до 1.568 и обратно */
+    --spring-bouncy: linear(
+      0, 0.224 1.9%, 1.355 6.2%, 1.51, 1.568, 1.543, 1.448 10.3%,
+      0.794 14.7%, 0.709, 0.677, 0.691 17.7%, 0.745 18.8%,
+      1.117 23.2%, 1.184 25.2%, 1.092 27.5%, 0.949 30.6%, 0.887,
+      0.866 34%, 0.871 35.5%, 0.946 38.6%, 1.031 41.6%, 1.022 44%,
+      0.991 47.4%, 0.973 52%, 0.977 57.7%, 1.003 66.4%, 1.015 72.5%,
+      0.997 83.5%, 1
+    );
+    --spring-bouncy-duration: 1200ms;
+  }
+}
+
+/* Зерно: чуть заметная текстура ночного воздуха */
+.page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+}
+
+/* Выделение — как на whimsy: щедрый фиолетовый */
+.page ::selection {
+  background: hsl(260 100% 40% / 0.85);
+  color: #fff;
+}
+
+/* Фокус — жёлтое пунктирное кольцо whimsy */
+.page :focus-visible {
+  outline: 3px dashed var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.page section[id] {
+  scroll-margin-top: 4.75rem;
+}
+
+/* ---------- КАРКАС СЕКЦИЙ ---------- */
+
+.section {
+  position: relative;
+  padding: clamp(4.5rem, 10vw, 8rem) 6vw;
+}
+
+/*
+ * Полоса-фон: чуть поднятое небо для ритма. Края не рамка, а туман —
+ * ночная земля растворяет полосу трёхстоповым dissolve (0 → 55% → 100%),
+ * рамп в пикселях, чтобы высокая (Демо) и низкая (FAQ) секции таяли
+ * одинаково. Смешение через color-mix от токена — переживёт смену земли.
+ */
+.band {
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0,
+      color-mix(in srgb, var(--bg-2) 55%, transparent) 92px,
+      var(--bg-2) 200px,
+      var(--bg-2) calc(100% - 200px),
+      color-mix(in srgb, var(--bg-2) 55%, transparent) calc(100% - 92px),
+      transparent 100%
+    );
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.secHead {
+  margin-bottom: clamp(2.2rem, 5vw, 3.6rem);
+}
+
+/*
+ * Моно-надзаголовок — рубрика раздела (в whimsy моно живёт на метах:
+ * цены, кикеры).
+ */
+.eyebrow {
+  margin: 0 0 0.9rem;
+  font-family: var(--f-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mist-2);
+}
+
+.h2 {
+  margin: 0;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 5.8vw, 4.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+/*
+ * Волнистое подчёркивание заголовков — рецепт whimsy №1 (draw-on-scroll):
+ * тусклый трек виден сразу, поверх него штрих рисует себя при входе
+ * в кадр (view-timeline, ниже). Без поддержки timeline — готовая волна.
+ */
+.squiggle {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.18em;
+}
+
+.squiggleSvg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0.16em;
+  overflow: visible;
+}
+
+.sqTrack,
+.sqLine {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.sqTrack {
+  stroke: hsl(217 91% 71% / 0.22);
+}
+
+.sqLine {
+  stroke: var(--periwinkle);
+}
+
+.secSub {
+  margin: 1rem 0 0;
+  font-family: var(--f-text), sans-serif;
+  font-size: 16.5px;
+  color: var(--mist);
+  max-width: 54ch;
+}
+
+/* Переключение голоса (signature whimsy): присказка уходит в руку */
+.subHand {
+  font-family: var(--f-hand), cursive;
+  font-size: 1.25em;
+  line-height: 1.1;
+  color: var(--pink);
+}
+
+/* Скрытие до появления: секция получает класс in из useReveal.
+ * Вход — пружиной (токен), проявление — коротким линейным. */
+.rv {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.5s linear,
+    transform var(--spring-soft-duration) var(--spring-soft);
+}
+
+:global(.in) .rv {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- КНОПКИ-ПИЛЮЛИ ---------- */
+
+/* Кнопки-пилюли: action-цвет whimsy, нажатие ощущается */
+.cta,
+.ctaGhost {
+  display: inline-block;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 600;
+  font-size: 15.5px;
+  letter-spacing: 0.02em;
+  border-radius: 1000px;
+  padding: 16px 40px;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+    transform var(--spring-soft-duration) var(--spring-soft),
+    box-shadow 0.18s ease;
+}
+
+.cta {
+  position: relative;
+  background: var(--action);
+  color: #fff;
+  box-shadow: 0 6px 20px hsl(240 95% 62% / 0.35);
+}
+
+.cta:hover {
+  background: var(--action-2);
+  box-shadow: 0 12px 32px hsl(240 95% 62% / 0.5);
+  transform: translateY(-2px);
+}
+
+.cta:active,
+.ctaGhost:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.ctaGhost {
+  border: 1.5px solid var(--edge-2);
+  color: var(--text);
+}
+
+.ctaGhost:hover {
+  border-color: var(--periwinkle);
+  color: var(--periwinkle);
+  transform: translateY(-2px);
+}
+
+/* ---------- ЗВЁЗДЫ ---------- */
+
+/*
+ * Звёзды: один слой точек в верхней полосе неба — фото уже даёт небо,
+ * второй слой спорил с ним. Используют герой и финал (.starsLow —
+ * в финале звёзды чуть выше и левее).
+ */
+.stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.stars::before {
+  content: "";
+  position: absolute;
+  top: 18%;
+  left: 12%;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    12vw 4vh 0 0 hsl(210 10% 92% / 0.8),
+    28vw -2vh 1px 0 hsl(217 91% 71% / 0.7),
+    46vw 8vh 0 0 hsl(210 10% 92% / 0.6),
+    63vw 2vh 1px 0 hsl(280 100% 85% / 0.6),
+    78vw 10vh 0 0 hsl(210 10% 92% / 0.75),
+    88vw -4vh 1px 0 hsl(258 89% 76% / 0.55),
+    6vw 26vh 0 0 hsl(210 10% 92% / 0.5),
+    36vw 30vh 0 0 hsl(217 91% 71% / 0.5),
+    70vw 28vh 1px 0 hsl(210 10% 92% / 0.65),
+    93vw 34vh 0 0 hsl(40 100% 70% / 0.5);
+}
+
+.starsLow::before {
+  top: 10%;
+  left: 8%;
+}
+
+/* Звёзды мигают — медленно и не хором */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stars::before {
+    animation: twinkle 7s ease-in-out infinite;
+  }
+}
+
+/* ---------- СЛОТЫ ---------- */
+
+/*
+ * Слоты под изображения (см. IMAGE-SLOTS.md): плоский блок с рамкой
+ * до подмены на реальный файл; пропорции зафиксаны слот-модификатором.
+ */
+.slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 58%, var(--bg) 100%);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.slot > span {
+  font-family: var(--f-mono), monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: hsl(215 20% 72% / 0.85);
+  border: 1px dashed hsl(210 10% 34% / 0.7);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: hsl(222 47% 9% / 0.45);
+}
+
+.slotPaper {
+  background: linear-gradient(180deg, #ddd0b0 0%, var(--paper-2) 100%);
+}
+
+.slotPaper > span {
+  color: hsl(43 38% 32% / 0.6);
+  border-color: hsl(43 22% 55% / 0.5);
+  background: hsl(43 33% 88% / 0.55);
+}
+
+.slotPortrait {
+  aspect-ratio: 3 / 4;
+}
+
+/* ---------- МЕЛКИЕ ОБЩИЕ КЛАССЫ ---------- */
+
+/* Экранный читалке — слово целиком, глазу — по буквам */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dots {
+  letter-spacing: 3px;
+  color: var(--text);
+}
+
+.dots i {
+  font-style: normal;
+  color: var(--mist-2);
+}
+
+/* ---------- БЕГУНОК ФИНАЛА (рецепт №2, masked-runner) ---------- */
+
+/*
+ * Сквиггл-фланги заголовка финала: волна-маска режет два прямоугольника —
+ * градиентную постель и световой вэйв (в decor.tsx). Размер в clamp, чтобы
+ * на мобильных фланги уступали место слову. translateY — как у whimsy:
+ * бегунок чуть ниже средней линии, у «подчёркивания» текста.
+ */
+.runner {
+  flex: none;
+  display: inline-block;
+  width: clamp(34px, 10vw, 140px);
+  height: clamp(5px, 1.2vw, 12px);
+  transform: translateY(0.08em);
+}
+
+.runnerFlip {
+  transform: scaleX(-1) translateY(0.08em);
+}
+
+.runnerSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/*
+ * Вэйв спит за правым краем (base-трансформ), пока не включится анимация:
+ * проценты — от viewBox (transform-box: view-box, как у whimsy), 120% →
+ * -100% проносит свет по всей волне. Пауза до появления секции (.in)
+ * и полный покой при prefers-reduced-motion — остаётся постель-градиент.
+ */
+.runnerSweep {
+  transform-box: view-box;
+  transform: translateX(-100%);
+  animation: runnerSweep 5000ms linear infinite paused;
+}
+
+@keyframes runnerSweep {
+  0% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(.in) .runnerSweep {
+    animation-play-state: running;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runnerSweep {
+    animation: none;
+  }
+}
+
+/* ---------- ШВЫ МЕЖДУ СЕКЦИЯМИ ---------- */
+
+/*
+ * Волна-росчерк на стыке секций (переходы-«дорога»): полоса нулевой
+ * сетевой высоты лежит точно на шве — по половине высоты уходит в поля
+ * соседних секций (контента там нет, только padding). Оттенок шва —
+ * inline-токен --wave, фаза — вариант пути из decor.tsx. Трек подсказывает
+ * маршрут заранее, линию рисует скролл (правило в блоке view-timeline ниже).
+ */
+.seam {
+  position: relative;
+  z-index: 2;
+  height: clamp(36px, 5vw, 48px);
+  margin-block: calc(clamp(36px, 5vw, 48px) / -2);
+  pointer-events: none;
+}
+
+.seamSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.seamTrack,
+.seamLine {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.seamTrack {
+  stroke: color-mix(in srgb, var(--wave) 24%, transparent);
+}
+
+.seamLine {
+  stroke: var(--wave);
+}
+
+/* ---------- СКРОЛЛ-ТАЙМЛАЙН ПОДЧЁРКИВАНИЙ ---------- */
+
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Подчёркивания заголовков рисуют себя при входе (рецепт №1 whimsy).
+   100 1000 + 103 — без «огоньков» на концах до входа в диапазон */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .sqLine {
+      stroke-dasharray: 100 1000;
+      stroke-dashoffset: 103;
+      animation-name: trace;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 55%;
+    }
+
+    /*
+     * Шов тает медленнее слова: полоса тонкая, поэтому диапазон взят
+     * до exit — перо рисует волну, пока шов поднимается к середине
+     * кадра (~350px прокрутки), а не защёлкивается у нижней кромки.
+     * 100 1000 + 103 — без «огоньков» на концах до входа в диапазон.
+     */
+    .seamLine {
+      stroke-dasharray: 100 1000;
+      stroke-dashoffset: 103;
+      animation-name: trace;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 30% exit 45%;
+    }
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .rv {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .cta,
+  .ctaGhost {
+    transition: none;
+  }
+}

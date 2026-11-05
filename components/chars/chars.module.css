@@ -1,0 +1,236 @@
+/* ---------- СЫЩИКИ: полароиды из досье, приклеены к ночи ---------- */
+
+/*
+ * Жест whimsy: физический предмет на странице. Снимок висит на ленте
+ * скотча, чуть наклонённый, как приклеенный к стене ночи. Ховер —
+ * история «снимок снимают со стены и подносят к лицу»: карточка
+ * выпрямляется и отрывается выше, тень отделяется и подсвечивается
+ * цветом класса (магия персонажа освещает ночь), фото оживает,
+ * лента натягивается. Наклон за курсором — бюджетная версия рецептов
+ * whimsy №12/13: JS меряет геометрию и лерпит --rx/--ry, движением
+ * владеет CSS; шарнир — лента, transform-origin над карточкой.
+ */
+
+.roster {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 2.4vw, 1.9rem);
+  align-items: start;
+  padding-top: 14px;
+}
+
+/*
+ * Без дёрганья. Статья .pol — только зона ховера и раскладка: её бокс
+ * не двигается вообще, поэтому курсор у края не «роняет» ховер и
+ * карточка не мигает. Вся визуальная жизнь — на внутреннем .polIn.
+ * Подъём и выпрямление — мягкая --spring-soft (жёсткая --spring-bouncy
+ * с выбросом убрана: это и было «дёрганье»). Наклон за курсором лерпит
+ * JS в --rx/--ry, их читает transform внутреннего слоя; transition на
+ * transform у .polIn нет — лерп уже сглаживает, и переход .rv статьи
+ * больше не спорит с наклоном.
+ */
+.pol {
+  position: relative;
+}
+
+.polIn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 0 0 14px;
+  box-shadow:
+    0 12px 26px hsl(var(--shadow-color) / 0.5),
+    0 0 0 1px hsl(43 38% 32% / 0.16);
+  rotate: -2.2deg;
+  /* Шарнир наклона — лента скотча над снимком */
+  transform-origin: 50% -12px;
+  transform: perspective(900px)
+    rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: rotate var(--spring-soft-duration) var(--spring-soft),
+    translate var(--spring-soft-duration) var(--spring-soft),
+    box-shadow var(--dur-ui) ease;
+}
+
+.polDown .polIn {
+  rotate: 2deg;
+  translate: 0 22px;
+}
+
+/*
+ * Ховер, слой первый — свет: тень отделяется от стены, цвет класса
+ * подсвечивает ночь под снимком. Движения здесь нет, поэтому доступно
+ * и при prefers-reduced-motion. Без color-mix — просто глубже тень.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .pol:hover {
+    z-index: 1;
+  }
+
+  .pol:hover .polIn {
+    box-shadow:
+      0 20px 44px hsl(var(--shadow-color) / 0.55),
+      0 0 0 1px hsl(43 38% 32% / 0.22);
+  }
+}
+
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  @media (hover: hover) and (pointer: fine) {
+    .pol:hover .polIn {
+      box-shadow:
+        0 24px 50px hsl(var(--shadow-color) / 0.55),
+        0 18px 56px
+          color-mix(in srgb, var(--cc, var(--periwinkle)) 30%, transparent),
+        0 0 0 1px
+          color-mix(in srgb, var(--cc, var(--periwinkle)) 24%, transparent);
+    }
+  }
+}
+
+/*
+ * Ховер, слой второй — движение (только без reduce): снимок
+ * выпрямляется, отрывается от стены и качается на ленте за курсором.
+ */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pol:hover .polIn {
+    rotate: 0deg;
+    translate: 0 -10px;
+  }
+
+  /* Фото оживает: чуть ближе и светлее — «поднести к глазам» */
+  .pshot img {
+    transition:
+      transform var(--spring-soft-duration) var(--spring-soft),
+      filter var(--dur-ui) ease;
+  }
+
+  .pol:hover .pshot img {
+    transform: scale(1.05);
+    filter: brightness(1.05) saturate(1.06);
+  }
+
+  /* Лента натягивается: снимок отрывается, скотч тянется следом */
+  .tape {
+    transform-origin: 50% 0;
+    transition:
+      rotate var(--dur-ui) var(--spring-soft),
+      scale var(--dur-ui) var(--spring-soft),
+      opacity var(--dur-micro) ease;
+  }
+
+  .pol:hover .tape {
+    rotate: -6deg;
+    scale: 1 1.16;
+    opacity: 0.95;
+  }
+}
+
+/* Лента скотча цвета класса: держит снимок на стене */
+.tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  translate: -50% 0;
+  rotate: -3deg;
+  width: 88px;
+  height: 24px;
+  border-radius: 2px;
+  background: var(--cc, var(--periwinkle));
+  opacity: 0.82;
+  box-shadow: 0 2px 6px hsl(var(--shadow-color) / 0.35);
+  pointer-events: none;
+}
+
+.pshot {
+  aspect-ratio: 4 / 5;
+  margin: 10px 10px 0;
+  border-radius: 3px;
+}
+
+.pname {
+  margin: 10px 13px 1px;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.prole {
+  margin: 0 13px 0.55rem;
+  font-family: var(--f-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ccd, var(--cd-detective));
+}
+
+.pbio {
+  margin: 0 13px;
+  font-family: var(--f-text), sans-serif;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  flex-grow: 1;
+}
+
+/* Способность — рукописная строка внизу снимка */
+.pability {
+  margin: 0.75rem 13px 0;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--f-hand), cursive;
+  font-size: 1.12rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.pability span {
+  font-size: 0.95rem;
+  color: var(--ink-2);
+}
+
+/* ---------- АДАПТИВ ---------- */
+
+@media (max-width: 1020px) {
+  .roster {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.6rem, 4vw, 2.6rem);
+  }
+
+  /*
+   * Полароид — предмет, а не панель: на широких треках не растягиваем
+   * карточку на весь трек, держим «настольный» размер снимка
+   * (на десктопе колонка ~280px) и ставим по центру трека.
+   */
+  .pol {
+    max-width: 320px;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .roster {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Одна колонка: снимок в руке, не во всю ширину экрана */
+  .pol {
+    max-width: 300px;
+  }
+
+  .polDown .polIn {
+    translate: 0 0;
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .polIn {
+    transition: none;
+  }
+}

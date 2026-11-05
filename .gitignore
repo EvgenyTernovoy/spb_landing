@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# internal working materials, not part of the published app
+references/
+v4.html
+.agents/
+skills-lock.json

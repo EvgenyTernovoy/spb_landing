@@ -1,0 +1,389 @@
+/*
+ * Шапка-остров: логотипа нет (имя страницы носит герой), меню — в плашке-
+ * линзе по центру. Стиль liquid glass: backdrop-filter с blur + saturate +
+   brightness преломляет и насыщает небо за стеклом; объём капле дают
+ * спекулярный рант (светлая верхняя грань inset-тенью + тёмная нижняя),
+ * полупрозрачный градиентный фил и диагональный блик (::before, под
+ * контентом). data-scrolled (ставит слушатель в TopBar.tsx) уплотняет
+ * стекло: над героем — прозрачнее, над контентом — плотнее и глубже.
+ */
+.top {
+  /*
+   * Fixed, не sticky: плашка-остров не занимает места в потоке —
+   * герой начинается с самого верха (фото под стеклом с нулевого
+   * пикселя), линза парит над небом героя.
+   */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 6vw 0;
+  /* оболочка не ловит указатель — остров активен только над собой */
+  pointer-events: none;
+}
+
+.glassPill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2.2vw, 1.9rem);
+  max-width: 100%;
+  padding: 0.55rem 1rem;
+  border-radius: 1000px;
+  border: 1px solid hsl(210 30% 85% / 0.14);
+  background:
+    linear-gradient(
+      180deg,
+      hsl(210 40% 90% / 0.1),
+      hsl(210 40% 90% / 0.02) 42%,
+      hsl(222 47% 4% / 0.05)
+    ),
+    hsl(222 47% 9% / 0.42);
+  -webkit-backdrop-filter: blur(16px) saturate(170%) brightness(1.06);
+  backdrop-filter: blur(16px) saturate(170%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 hsl(210 40% 92% / 0.16),
+    inset 0 -1px 0 hsl(222 47% 4% / 0.45),
+    0 2px 8px hsl(222 47% 4% / 0.28),
+    0 12px 32px hsl(222 47% 4% / 0.42);
+  pointer-events: auto;
+  transition:
+    background var(--dur-ui) ease,
+    box-shadow var(--dur-ui) ease,
+    padding var(--dur-ui) var(--spring-soft);
+}
+
+/*
+ * Диагональный блик капли: свет неба скользит по стеклу. Лежит под
+ * контентом (псевдо ::before красится раньше детей), текст остаётся
+ * резким.
+ */
+.glassPill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    hsl(0 0% 100% / 0.05) 44%,
+    hsl(0 0% 100% / 0.1) 50%,
+    hsl(0 0% 100% / 0.04) 56%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+/* Проскролили: стекло плотнее (фон тот же по структуре — интерполяция,
+   не щелчок), тень глубже, плашка компактнее */
+.top[data-scrolled] .glassPill {
+  padding-block: 0.4rem;
+  background:
+    linear-gradient(
+      180deg,
+      hsl(210 40% 90% / 0.1),
+      hsl(210 40% 90% / 0.02) 42%,
+      hsl(222 47% 4% / 0.05)
+    ),
+    hsl(222 47% 9% / 0.62);
+  box-shadow:
+    inset 0 1px 0 hsl(210 40% 92% / 0.16),
+    inset 0 -1px 0 hsl(222 47% 4% / 0.45),
+    0 2px 8px hsl(222 47% 4% / 0.3),
+    0 16px 40px hsl(222 47% 4% / 0.55);
+}
+
+/* Волосная черта между меню и CTA: градиент тает к краям, деталь стекла */
+.pillDivider {
+  flex: none;
+  width: 1px;
+  align-self: stretch;
+  margin-block: 0.3rem;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    hsl(210 30% 85% / 0.22),
+    transparent
+  );
+}
+
+.topNav {
+  display: flex;
+  gap: clamp(0.9rem, 2vw, 1.9rem);
+  font-family: var(--f-text), sans-serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--mist);
+  white-space: nowrap;
+}
+
+.topNav a {
+  position: relative;
+  padding: 0.3rem 0.05rem 0.45rem;
+  transition: color var(--dur-ui) ease;
+}
+
+.topNav a:hover,
+.topNav a:focus-visible {
+  color: var(--text);
+}
+
+/* Текущий раздел (data-current ставит scroll-spy в TopBar.tsx):
+   росчерк под ссылкой остаётся нарисованным */
+.topNav a[data-current] {
+  color: var(--periwinkle);
+}
+
+/*
+ * Росчерк ссылки — рецепт №1 whimsy в ховер-версии: трек чуть виден
+ * всегда (переиспользуем .sqTrack), штрих дорисовывает себя пружиной
+ * по наведению/фокусу и держится на текущем разделе. pathLength=100 —
+ * dash-математика в нормированных единицах, без измерений JS.
+ */
+.navSq {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.08rem;
+  width: 100%;
+  height: 5px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.navSqLine {
+  fill: none;
+  stroke: var(--periwinkle);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  /*
+   * Гочта dash-математики: period = 2×L кладёт стык следующего штриха
+   * точно на конец пути (круглый наконечник светится там), а граница
+   * штриха при offset=L — точно на начало. Лекарство из рецепта №1:
+   * огромный второй пробел (без заворота) + запас 3 единицы за offset,
+   * чтобы наконечник ушёл за пределы пути целиком.
+   */
+  stroke-dasharray: 100 1000;
+  stroke-dashoffset: 103;
+  transition: stroke-dashoffset var(--spring-soft-duration) var(--spring-soft);
+}
+
+.topNav a:hover .navSqLine,
+.topNav a:focus-visible .navSqLine,
+.topNav a[data-current] .navSqLine {
+  stroke-dashoffset: 0;
+}
+
+/*
+ * CTA шапки — «туннельная» кнопка whimsy (рецепт №8) в миниатюре:
+ * жёсткий синий упор под пилюлей, нажатие вдавливает кнопку в страницу.
+ * Мягкая тень — тинт ночи (var(--shadow-color)), не чёрная.
+ */
+.topCta {
+  flex: none;
+  font-family: var(--f-text), sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--action);
+  border-radius: 1000px;
+  padding: 8px 18px;
+  box-shadow:
+    0 3px 0 hsl(217 91% 30%),
+    0 8px 20px hsl(var(--shadow-color) / 0.5);
+  transition: background 0.18s ease,
+    transform var(--dur-micro) var(--spring-soft),
+    box-shadow var(--dur-micro) var(--spring-soft);
+}
+
+.topCta:hover {
+  background: var(--action-2);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 0 hsl(217 91% 30%),
+    0 12px 26px hsl(var(--shadow-color) / 0.55);
+}
+
+.topCta:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 0 0 hsl(217 91% 30%),
+    0 3px 8px hsl(var(--shadow-color) / 0.4);
+}
+
+/* ---------- БУРГЕР (только мобилка) ---------- */
+
+/*
+ * Бургер живёт в плашке слева от CTA: на десктопе display: none.
+ * Полоски — псевдоэлементы: две линии схлопываются в крест, когда
+ * плашка несёт data-open (JS только флипает атрибут).
+ */
+.burger {
+  display: none;
+}
+
+.burgerIcon {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 12px;
+}
+
+.burgerIcon::before,
+.burgerIcon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text);
+  transition: transform var(--dur-ui) var(--spring-soft);
+}
+
+.burgerIcon::before {
+  top: 0;
+}
+
+.burgerIcon::after {
+  bottom: 0;
+}
+
+.glassPill[data-open] .burgerIcon::before {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.glassPill[data-open] .burgerIcon::after {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+/* ---------- АДАПТИВ ---------- */
+
+/*
+ * Узкие экраны: меню сворачивается в бургер — плашка = только бургер
+ * прижата к правому краю (CTA и разделитель — десктопные детали),
+ * ссылки выпадают маленькой стеклянной картой от правого края плашки
+ * вниз (тот же nav, другая форма). Карта собрана из того же стекла:
+ * blur+saturate, рант, плотный фил 0.85 — читается поверх контента.
+ * Закрытие — тап мимо, Escape, переход по ссылке (в TSX).
+ */
+@media (max-width: 980px) {
+  .top {
+    /* плашка-бургер прижимается к правому краю, как привычная шапка */
+    justify-content: flex-end;
+    padding: 0.6rem 4vw 0;
+  }
+
+  .glassPill {
+    gap: 0.8rem;
+    padding-inline: 0.7rem;
+  }
+
+  /* «Играть» и волосная черта — десктопные детали: на мобиле плашка =
+     только бургер, CTA ждёт игрока в герое */
+  .topCta,
+  .pillDivider {
+    display: none;
+  }
+
+  .burger {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 1000px;
+    color: var(--text);
+    transition: background var(--dur-micro) ease;
+  }
+
+  .burger:hover,
+  .burger:focus-visible {
+    background: hsl(210 40% 90% / 0.08);
+  }
+
+  .burger:active {
+    background: hsl(210 40% 90% / 0.14);
+  }
+
+  .topNav {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    right: 0;
+    transform-origin: top right;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    width: max-content;
+    min-width: 215px;
+    max-width: calc(100vw - 2.5rem);
+    padding: 0.55rem;
+    border-radius: 20px;
+    border: 1px solid hsl(210 30% 85% / 0.14);
+    background:
+      linear-gradient(
+        180deg,
+        hsl(210 40% 90% / 0.08),
+        hsl(222 47% 4% / 0.05)
+      ),
+      hsl(222 47% 9% / 0.85);
+    -webkit-backdrop-filter: blur(16px) saturate(170%) brightness(1.06);
+    backdrop-filter: blur(16px) saturate(170%) brightness(1.06);
+    box-shadow:
+      inset 0 1px 0 hsl(210 40% 92% / 0.16),
+      inset 0 -1px 0 hsl(222 47% 4% / 0.45),
+      0 2px 8px hsl(222 47% 4% / 0.3),
+      0 18px 44px hsl(222 47% 4% / 0.55);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.97);
+    /* visibility с задержкой на закрытие — дать fade доcитать */
+    transition:
+      opacity var(--dur-ui) ease,
+      transform var(--dur-ui) var(--spring-soft),
+      visibility 0s linear var(--dur-ui);
+  }
+
+  .glassPill[data-open] .topNav {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity var(--dur-ui) ease,
+      transform var(--dur-ui) var(--spring-soft),
+      visibility 0s;
+  }
+
+  /* Ссылки-строки: тап-таргет ≥44px, ровные поля — подсечек нет */
+  .topNav a {
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+  }
+
+  .topNav a:hover,
+  .topNav a:focus-visible {
+    background: hsl(210 40% 90% / 0.07);
+  }
+
+  /* В карте меню строки чистые: росчерки остаются десктопной фишкой */
+  .navSq {
+    display: none;
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .glassPill,
+  .topCta,
+  .topNav,
+  .navSqLine,
+  .burger,
+  .burgerIcon::before,
+  .burgerIcon::after {
+    transition: none;
+  }
+}

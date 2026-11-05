@@ -1,0 +1,412 @@
+/* ---------- ДЕМО: интерактивная панорама в горизонтальном телефоне ---------- */
+
+/*
+ * Игра блокирует ориентацию в landscape (useLandscapeLock в клиенте),
+ * поэтому телефон лежит горизонтально. Внутри — только панорама локации
+ * L01 «Квартира Громова» и настоящие улики дела: тянется, метки жмутся,
+ * карточка улики — бумага досье (весь игровой UI остался в самой игре).
+ */
+
+.previewGrid {
+  /*
+   * Текст сверху, телефон ниже по центру — на любом экране.
+   * Ширина телефона ограничена на самом phoneWrap (трек определён,
+   * цикличности нет).
+   */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.previewText {
+  min-width: 0;
+}
+
+.previewPara {
+  margin: 1.6rem 0 0;
+  max-width: 40ch;
+  font-family: var(--f-text), sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--mist);
+}
+
+.previewPara b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Цветные слова лид-абзаца: перивинкль — игра, розовый — магия */
+.previewPara b.markPeri {
+  color: var(--periwinkle);
+}
+
+.previewPara b.markPink {
+  color: var(--pink);
+}
+
+/* Рукописный указатель: «тяните!» — жест whimsy-помёток */
+.handNote {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 1.8rem;
+  rotate: -2deg;
+  font-family: var(--f-hand), cursive;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--pink);
+}
+
+.handNote svg {
+  width: 44px;
+  height: 30px;
+  color: var(--pink);
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .handNote svg path {
+    stroke-dasharray: 110 1000;
+    stroke-dashoffset: 113;
+    animation: draw 1.4s var(--ease) 0.9s both;
+  }
+}
+
+.phoneWrap {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  rotate: -2deg;
+}
+
+/* Тонкий луч за телефоном — два фонаря: periwinkle и pink */
+.lamp {
+  position: absolute;
+  inset: -22% -8%;
+  background:
+    radial-gradient(42% 52% at 68% 22%, hsl(217 91% 71% / 0.14), transparent 70%),
+    radial-gradient(36% 46% at 30% 78%, hsl(258 89% 76% / 0.1), transparent 72%);
+  z-index: -1;
+}
+
+@keyframes lampBreathe {
+  to {
+    opacity: 0.6;
+    scale: 1.05;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lamp {
+    animation: lampBreathe 7s ease-in-out infinite alternate;
+  }
+}
+
+/* Корпус: 19.5:9, как современный телефон в landscape */
+/*
+ * Корпус — iPhone в landscape, space black: плоский титановый рант
+ * (двойной фон border-box/padding-box), тонкая равномерная рамка
+ * вокруг стекла, Dynamic Island у левого торца, качелька громкости
+ * на верхней грани у левого края, питание — на нижней у правого.
+ */
+.phoneL {
+  position: relative;
+  aspect-ratio: 19.5 / 9;
+  --screenR: clamp(19px, 4.4vw, 30px);
+  border: 2px solid transparent;
+  border-radius: clamp(26px, 5.6vw, 40px);
+  background:
+    linear-gradient(#05070c, #05070c) padding-box,
+    linear-gradient(165deg, #49505f, #191d26 34%, #2e3441 62%, #0b0e14) border-box;
+  box-shadow:
+    /* сатиновая кромка ранта */
+    inset 0 1px 1px rgb(255 255 255 / 0.22),
+    inset 0 -1px 1px rgb(255 255 255 / 0.08),
+    /* тёмный шов по наружному краю + контактная тень */
+    0 0 0 1px hsl(222 40% 5%),
+    0 10px 24px hsl(var(--shadow-color) / 0.45),
+    0 34px 64px hsl(var(--shadow-color) / 0.6);
+}
+
+/* Качелька громкости — верхняя грань, у левого края */
+.phoneL::before {
+  content: "";
+  position: absolute;
+  top: -2.5px;
+  left: 8.5%;
+  width: clamp(26px, 4.6vw, 36px);
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #565e6e, #22272f 60%, #10131a);
+  box-shadow: 0 -1px 1px rgb(255 255 255 / 0.18);
+}
+
+/* Кнопка питания — нижняя грань, у правого края (раскладка iPhone) */
+.phoneL::after {
+  content: "";
+  position: absolute;
+  bottom: -2.5px;
+  right: 8.5%;
+  width: clamp(19px, 3.4vw, 27px);
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(0deg, #4c5363, #1d222b 60%, #10131a);
+  box-shadow: 0 1px 1px rgb(255 255 255 / 0.12);
+}
+
+.screen {
+  position: absolute;
+  inset: clamp(5px, 1.2vw, 8px);
+  border-radius: var(--screenR);
+  overflow: hidden;
+  /* стекло утоплено в прокладку; contain — страховка клипа углов */
+  contain: paint;
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.7);
+}
+
+/*
+ * Dynamic Island: в landscape — вертикальная капсула у левого торца.
+ * Линза — слабый синий блик в нижней части капсулы.
+ */
+.screen::before {
+  content: "";
+  position: absolute;
+  left: clamp(11px, 2.1vw, 16px);
+  top: 50%;
+  translate: 0 -50%;
+  width: clamp(18px, 3.3vw, 21px);
+  height: clamp(50px, 9.6vw, 64px);
+  border-radius: 999px;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 3px at 50% 71%, #233450 0 2px, transparent 2.6px),
+    #04060b;
+  box-shadow:
+    0 0 0 1.5px rgb(0 0 0 / 0.9),
+    inset 0 0 5px rgb(0 0 0 / 0.85);
+}
+
+/* Блик стекла по диагонали — над контентом, но еле заметный */
+.screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    118deg,
+    rgb(255 255 255 / 0.055) 0%,
+    rgb(255 255 255 / 0.02) 22%,
+    transparent 44%
+  );
+  box-shadow: inset 0 0 28px rgb(0 0 0 / 0.22);
+}
+
+/* Подсказка «тяните кадр» — гаснет после первого жеста */
+.gHint {
+  position: absolute;
+  left: 50%;
+  bottom: 58px;
+  translate: -50% 0;
+  z-index: 4;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: var(--f-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  background: rgb(2 6 23 / 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.gHint::before {
+  content: "⟵ ";
+}
+
+.gHint::after {
+  content: " ⟶";
+}
+
+.gHint[data-hide="true"] {
+  opacity: 0;
+}
+
+/* Карточка улики: бумага досье на ночном кадре, тень — pink */
+.clueCard {
+  position: absolute;
+  left: clamp(10px, 2.4%, 16px);
+  right: clamp(10px, 2.4%, 16px);
+  bottom: clamp(10px, 2.6%, 18px);
+  z-index: 5;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 hsl(258 89% 76% / 0.9);
+  padding: 12px 14px;
+  animation: cardIn var(--spring-duration) var(--spring) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+.clueHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--f-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 6px;
+  margin-bottom: 9px;
+}
+
+/* Помета мистической улики — цвет ведьмы из игры */
+.clueWitch {
+  margin-left: auto;
+  font-family: var(--f-hand), cursive;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cd-witch);
+  rotate: -2deg;
+}
+
+.clueClose {
+  margin-left: auto;
+  font-family: var(--f-text), sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.clueWitch + .clueClose {
+  margin-left: 0;
+}
+
+.clueRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.clueThumb {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+
+.clueThumbM {
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-family: var(--f-text), sans-serif;
+  filter: drop-shadow(0 0 8px hsl(258 89% 76% / 0.7));
+  background:
+    radial-gradient(circle at 50% 55%, hsl(258 89% 76% / 0.25), transparent 70%),
+    var(--paper-2);
+}
+
+.clueTitle {
+  margin: 0 0 5px;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.clueText {
+  margin: 0;
+  font-family: var(--f-text), sans-serif;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/*
+ * Узкие экраны: корпус телефона ниже ~640px становится низким
+ * (экран ≈150px высотой), карточка в настольных размерах закрывала
+ * почти всю панораму. Ужимаем вертикаль: меньше паддинги, компактнее
+ * шапка/миниатюра/текст — карточка занимает ~60% экрана вместо ~90%.
+ */
+@media (max-width: 640px) {
+  .clueCard {
+    padding: 7px 9px;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 hsl(258 89% 76% / 0.9);
+  }
+
+  .clueHead {
+    font-size: 8.5px;
+    letter-spacing: 0.16em;
+    padding-bottom: 4px;
+    margin-bottom: 5px;
+  }
+
+  .clueWitch {
+    font-size: 11.5px;
+  }
+
+  .clueClose {
+    font-size: 15px;
+  }
+
+  .clueRow {
+    gap: 9px;
+  }
+
+  .clueThumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+  }
+
+  .clueThumbM {
+    font-size: 17px;
+  }
+
+  .clueTitle {
+    margin-bottom: 2px;
+    font-size: 0.92rem;
+  }
+
+  .clueText {
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .clueCard {
+    animation: none;
+  }
+}

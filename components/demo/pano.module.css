@@ -1,0 +1,198 @@
+/* ---------- 360°-ПАНОРАМА: сфера three.js + метки улик ---------- */
+
+/*
+ * 360°-панорама: сфера three.js, как PanoramaViewer игры.
+ * ВАЖНО: каждый сплошной слой внутри экрана режет сам себя тем же
+ * радиусом (--screenR из demo.module.css) — GPU-канвас умеет вылезать
+ * за скруглённый overflow: hidden родителя, own border-radius этому
+ * не подвержен.
+ */
+.pano360 {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--screenR);
+}
+
+.panoCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.panoCanvas:active {
+  cursor: grabbing;
+}
+
+/* Загрузка three.js: тихое ночное окно */
+.panoLoad {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--screenR);
+  background:
+    radial-gradient(60% 80% at 50% 60%, hsl(222 47% 16% / 0.9), transparent 75%),
+    var(--bg-2);
+}
+
+/* Fallback без WebGL: плоский кадр без вращения */
+.panoFallback {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--screenR);
+}
+
+.panoFallback img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--screenR);
+  object-fit: cover;
+  object-position: 50% 62%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+ * Метки улик. В игре улики невидимы, ведьма видит свечение — в демо
+ * подсвечены все: синие — обычные, фиолетовая — мистическая (E21,
+ * «видна только ведьме»). В 3D позицию ставит JS (проекция сферы),
+ * поэтому базовая точка отсчёта — левый верх; fallback центрует сам.
+ */
+.hotspot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  visibility: hidden;
+}
+
+.pano360 .hotspot {
+  z-index: 2;
+}
+
+.panoFallback .hotspot {
+  translate: -50% -50%;
+  visibility: visible;
+}
+
+.hotDot {
+  width: 11px;
+  height: 11px;
+  background: var(--periwinkle);
+  border-radius: 50%;
+  box-shadow:
+    0 0 12px hsl(217 91% 71% / 0.8),
+    0 0 26px hsl(217 91% 71% / 0.45);
+  transition: scale var(--dur-micro) var(--spring-soft);
+}
+
+.hotspot:active .hotDot {
+  scale: 0.8;
+}
+
+.hotRing {
+  position: absolute;
+  inset: 10px;
+  border: 2px solid var(--periwinkle);
+  border-radius: 50%;
+  animation: pulse 2.2s ease-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.95;
+  }
+  70% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Мистическая улика: фиолетовое свечение + искра, как мистическая подсветка в игре */
+.hotMystic .hotDot {
+  background: var(--pink);
+  box-shadow:
+    0 0 14px hsl(258 89% 76% / 0.9),
+    0 0 30px hsl(258 89% 76% / 0.5);
+}
+
+.hotMystic .hotRing {
+  border-color: var(--pink);
+}
+
+.hotSpark {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  font-size: 10px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px hsl(258 89% 76% / 0.8));
+  animation: sparkFloat 2.6s ease-in-out infinite;
+}
+
+@keyframes sparkFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* Собранная улика: зелёная, тихая — completed в игре */
+.hotDone {
+  cursor: default;
+}
+
+.hotDone .hotDot {
+  background: var(--success);
+  box-shadow: 0 0 8px hsl(160 84% 39% / 0.5);
+  scale: 0.7;
+  opacity: 0.85;
+}
+
+.hotDone .hotRing {
+  animation: none;
+  opacity: 0;
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hotSpark {
+    animation: none;
+  }
+
+  .hotRing {
+    animation: none;
+    opacity: 0.35;
+  }
+
+  .hotDot {
+    transition: none;
+  }
+}

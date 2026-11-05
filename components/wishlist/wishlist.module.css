@@ -1,0 +1,721 @@
+/*
+ * Модалка вишлиста «Распоряжение Минмага»: лист дела на ночном тумане —
+ * бумага досье как полароиды сыщиков (shared: --paper/--ink/--stamp),
+ * золотая лента-скотч (золото = «главная вещь» лендинга), штамп «−50%»
+ * пришивает себя пружиной с выбросом (жёсткая --spring-bouncy, как цифры
+ * дела №1), лист вздрагивает под ударом, росчерк под заголовком
+ * дорисовывается сам (рецепт №1, но от открытия модалки, не от скролла).
+ * Ниже — корешок-билет: перфорация с ножницами и пробитые края.
+ *
+ * Механика (подход whimsy §5.3): JS только зовёт showModal()/close(),
+ * состоянием владеет атрибут [open]; вход/выход — @starting-style плюс
+ * allow-discrete для display/overlay (статичный конец — готовая карта;
+ * без поддержки переходов модалка просто появляется и исчезает мгновенно).
+ * Фоновая жизнь (искры, свечение фонаря) — только при
+ * prefers-reduced-motion: no-preference (opt-in).
+ */
+
+/* ---------- СЦЕНА: диалог и ночной туман ---------- */
+
+.dialog {
+  border: 0;
+  padding: clamp(14px, 3.5vw, 30px);
+  background: none;
+  color: inherit;
+  /*
+   * Выход: close() снимает [open], но display/overlay удерживают карту
+   * на сцене, пока играет переход ухода (allow-discrete). Браузеры без
+   * поддержки игнорируют объявление целиком — закрытие остаётся мгновенным.
+   */
+  transition:
+    display 420ms allow-discrete,
+    overlay 420ms allow-discrete;
+}
+
+.dialog[open] {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  max-width: min(94vw, 640px);
+  max-height: min(92svh, 760px);
+  margin: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Туман за листом: ночь + тёплый свет фонаря над картой (золото скидки
+ * уже подсвечивает сцену). Дыхание света — 9с, чуть заметно, opt-in.
+ */
+.dialog::backdrop {
+  background:
+    radial-gradient(58% 46% at 50% 42%, hsl(43 89% 58% / 0.1), transparent 72%),
+    hsl(222 47% 9% / 0.66);
+  backdrop-filter: blur(7px) saturate(1.05);
+  -webkit-backdrop-filter: blur(7px) saturate(1.05);
+  opacity: 0;
+  transition: opacity var(--dur-ui) ease;
+}
+
+.dialog[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open]::backdrop {
+    animation: lampBreath 9s ease-in-out 1s infinite;
+  }
+}
+
+@keyframes lampBreath {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.86; }
+}
+
+/* ---------- ЛИСТ ДЕЛА ---------- */
+
+/*
+ * Бумага досье: зерно впечато в сам цвет (noise-слой множится с --paper),
+ * наклон -0.8° — лист положили на стол, не вставили в рамку. Вход —
+ * пружиной --spring (масштаб+подъём), вращение живёт отдельным свойством
+ * rotate и в переходе не участвует.
+ */
+.card {
+  position: relative;
+  width: min(88vw, 540px);
+  margin: auto;
+  /*
+   * Чернила штампа на бумаге: яркий --stamp (35% светлоты) сквозь multiply
+   * сливается с тёплой бумагой — здесь он глубже, вермильон печатной краски
+   * (≈5.4:1 на --paper). Токен локальный: демо-секция использует --stamp
+   * на тёмном, ему яркость нужна.
+   */
+  --stamp-ink: hsl(9 78% 36%);
+  rotate: -0.8deg;
+  border-radius: 6px;
+  padding: clamp(1.6rem, 4.5vw, 2.3rem) clamp(1.3rem, 4vw, 2.1rem) 0;
+  color: var(--ink);
+  font-family: var(--f-text), sans-serif;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+  background-color: var(--paper);
+  background-blend-mode: multiply;
+  box-shadow:
+    0 0 0 1px hsl(43 38% 32% / 0.22),
+    0 18px 40px hsl(var(--shadow-color) / 0.5),
+    0 40px 90px hsl(var(--shadow-color) / 0.6);
+  opacity: 0;
+  transform: translateY(36px) scale(0.93);
+  transition:
+    opacity 300ms ease,
+    transform var(--spring-duration) var(--spring);
+}
+
+.dialog[open] .card {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .dialog[open] .card {
+    opacity: 0;
+    transform: translateY(36px) scale(0.93);
+  }
+}
+
+/*
+ * Вздрог листа: штамп бьёт по бумаге на ~400мс после открытия — стол
+ * принимает удар. Отдельный слой внутри карты, чтобы не спорить
+ * с переходом входа (transform занят им).
+ */
+.cardIn {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] .cardIn {
+    animation: cardThud 340ms ease-out 400ms both;
+  }
+}
+
+@keyframes cardThud {
+  0% { translate: 0 0; }
+  40% { translate: 0 3px; }
+  100% { translate: 0 0; }
+}
+
+/* Золотая лента: лист приклеен к ночи, как полароиды сыщиков */
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  translate: -50% 0;
+  rotate: -2.5deg;
+  width: 132px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--lavender);
+  opacity: 0.82;
+  box-shadow: 0 2px 6px hsl(var(--shadow-color) / 0.35);
+  pointer-events: none;
+}
+
+/* ---------- ЗАКРЫТЬ ---------- */
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--ink-2);
+  transition:
+    background var(--dur-micro) ease,
+    color var(--dur-micro) ease,
+    transform var(--dur-ui) var(--spring-soft);
+}
+
+.close:hover {
+  background: hsl(43 38% 32% / 0.14);
+  color: var(--ink);
+  transform: rotate(90deg);
+}
+
+.close:active {
+  transform: rotate(90deg) scale(0.92);
+}
+
+.close svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------- ШАПКА ДОКУМЕНТА ---------- */
+
+.eyebrow {
+  margin: 0 0 0.8rem;
+  padding-right: 2.6rem; /* не налезает на крестик */
+  font-family: var(--f-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.4rem;
+  flex-wrap: wrap;
+}
+
+.headText {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.h {
+  margin: 0;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 5.5vw, 2.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+/*
+ * Росчерк под заголовком — чернильный вариант рецепта №1: трек цвета
+ * линованной бумаги, линию рисует штамп-оранжевый. Рисуется от открытия
+ * (dashoffset), а не от скролла — модалка не скроллится.
+ */
+.hSq {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.16em;
+  white-space: nowrap;
+}
+
+.hSqSvg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0.15em;
+  overflow: visible;
+}
+
+.sqTrackInk,
+.sqLineInk {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.sqTrackInk {
+  stroke: hsl(43 38% 32% / 0.35);
+}
+
+.sqLineInk {
+  stroke: var(--stamp-ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] .sqLineInk {
+    stroke-dasharray: 100 1000;
+    stroke-dashoffset: 103;
+    animation: traceIn 900ms linear 420ms both;
+  }
+}
+
+@keyframes traceIn {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Присказка от руки — голос переключается (signature whimsy) */
+.hand {
+  margin: 0.7rem 0 0;
+  font-family: var(--f-hand), cursive;
+  font-size: 1.4rem;
+  line-height: 1.15;
+  color: var(--cd-thief);
+  rotate: -1.5deg;
+}
+
+.body {
+  margin: 1.1rem 0 1.4rem;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+.body b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- ШТАМП «−50%» ---------- */
+
+/*
+ * Главный момент модалки: резиновый штамп с двойной рамкой и слегка
+ * кривыми углами (border-radius «от руки»). multiply — краска ложится
+ * на зерно бумаги. Приходит жёсткой пружиной (выброс), приземляется
+ * в наклон -7°; лист в этот момент вздрагивает (cardThud выше).
+ */
+.stampWrap {
+  position: relative;
+  flex: none;
+  margin: 0.4rem 0 0.2rem auto;
+  color: var(--stamp-ink);
+}
+
+.stamp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 20px 11px;
+  border: 3px solid currentColor;
+  border-radius: 14px 10px 15px 11px / 11px 15px 10px 14px;
+  rotate: -7deg;
+  mix-blend-mode: multiply;
+}
+
+.stamp::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid currentColor;
+  border-radius: 10px 7px 11px 8px / 8px 11px 7px 10px;
+  pointer-events: none;
+}
+
+.stampTop,
+.stampSub {
+  font-family: var(--f-mono), monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.stampNum {
+  font-family: var(--f-text), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.1rem, 6vw, 2.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin: 1px 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] .stamp {
+    animation: stampIn var(--spring-bouncy-duration) var(--spring-bouncy) 300ms both;
+  }
+}
+
+@keyframes stampIn {
+  from {
+    opacity: 0;
+    transform: scale(2.1) rotate(-9deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Искры у штампа: две, мигают вразнобой, тише звёзд героя */
+.spark {
+  position: absolute;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.spark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.sparkGold {
+  top: -15px;
+  right: -17px;
+  width: 22px;
+  height: 22px;
+  color: var(--lavender);
+}
+
+.sparkBlue {
+  bottom: -12px;
+  left: -21px;
+  width: 14px;
+  height: 14px;
+  color: var(--periwinkle);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] .sparkGold {
+    animation: sparkTwinkle 4.6s ease-in-out 1.2s infinite;
+  }
+
+  .dialog[open] .sparkBlue {
+    animation: sparkTwinkle 6.2s ease-in-out 2.1s infinite;
+  }
+}
+
+@keyframes sparkTwinkle {
+  0%, 100% {
+    opacity: 0.25;
+    scale: 0.7;
+    rotate: 0deg;
+  }
+  50% {
+    opacity: 1;
+    scale: 1;
+    rotate: 24deg;
+  }
+}
+
+/* ---------- КОРЕШОК-БИЛЕТ ---------- */
+
+/*
+ * Перфорация: пунктир через весь лист, ножницы режут линию, по краям —
+ * пробитые полукруги цвета ночи (тень внутрь продаёт дырку). Отрицательные
+ * поля вытягивают линию на края карты, за вычет её паддингов.
+ */
+.cut {
+  position: relative;
+  margin: 0.3rem calc(clamp(1.3rem, 4vw, 2.1rem) * -1) 0;
+  border-top: 2px dashed var(--rule);
+}
+
+.cut::before,
+.cut::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: hsl(222 47% 9% / 0.93);
+  box-shadow: inset 0 2px 5px hsl(222 47% 4% / 0.8);
+}
+
+.cut::before {
+  left: -13px;
+}
+
+.cut::after {
+  right: -13px;
+}
+
+.scissors {
+  position: absolute;
+  top: -10px;
+  left: 18px;
+  display: block;
+  width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--paper);
+  color: var(--ink-2);
+}
+
+.scissors svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ticket {
+  padding: 1.05rem 0 1.35rem;
+}
+
+/*
+ * Заявка-корешок: поле «на бланке» — светлая строка с пунктирным низом,
+ * как строчка бумажной анкеты. Фокус — чернильная линия и каретка цветом
+ * штампа (жёлтое пунктирное кольцо фокуса приходит из .page в shared).
+ *:user-invalid — нативная валидация type=email красит линию.
+ */
+.form {
+  margin: 0 0 0.85rem;
+}
+
+.label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-family: var(--f-hand), cursive;
+  font-size: 1.2rem;
+  line-height: 1.1;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.formRow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.input {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-family: var(--f-text), sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: hsl(43 45% 97% / 0.55);
+  border: 0;
+  border-bottom: 2px dashed var(--rule);
+  border-radius: 8px 8px 0 0;
+  padding: 12px 13px 10px;
+  caret-color: var(--stamp-ink);
+  transition:
+    border-color var(--dur-micro) ease,
+    background var(--dur-micro) ease;
+}
+
+.input::placeholder {
+  color: hsl(43 14% 52% / 0.85);
+}
+
+.input:focus {
+  border-bottom-color: var(--stamp-ink);
+  background: hsl(43 45% 98% / 0.78);
+}
+
+.input:user-invalid {
+  border-bottom-color: hsl(0 68% 42%);
+}
+
+/*
+ * Главная кнопка — золотая (золото помечает главное на всём лендинге),
+ * с ощущением вдавливания: жёсткий янтарный край под пилюлей, нажатие
+ * прожимает его (как topCta шапки, но золотом).
+ */
+.wish {
+  flex: none;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 700;
+  font-size: 15.5px;
+  letter-spacing: 0.01em;
+  color: #3a2a00;
+  background: var(--golden);
+  border-radius: 1000px;
+  padding: 12px 26px;
+  box-shadow:
+    0 4px 0 hsl(31 96% 32%),
+    0 14px 28px hsl(var(--shadow-color) / 0.45),
+    inset 0 1px 0 hsl(43 100% 90% / 0.85);
+  transition:
+    transform var(--dur-ui) var(--spring-soft),
+    box-shadow var(--dur-ui) var(--spring-soft),
+    filter var(--dur-micro) ease;
+}
+
+.wish:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08) brightness(1.03);
+  box-shadow:
+    0 6px 0 hsl(31 96% 32%),
+    0 18px 34px hsl(var(--shadow-color) / 0.5),
+    inset 0 1px 0 hsl(43 100% 90% / 0.85);
+}
+
+.wish:active {
+  transform: translateY(3px);
+  filter: saturate(1.02);
+  box-shadow:
+    0 1px 0 hsl(31 96% 32%),
+    0 5px 12px hsl(var(--shadow-color) / 0.35),
+    inset 0 1px 2px hsl(31 96% 20% / 0.35);
+}
+
+/*
+ * Подтверждение: мини-штамп «принято» бьёт той же пружиной stampIn,
+ * строка от руки — цветом криминалиста (зелёный «успех» из палитры
+ * классов игры, 5:1 на бумаге). Фокус переводится сюда из формы.
+ */
+.done {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin: 0 0 0.85rem;
+  padding: 0.3rem 0;
+}
+
+.done:focus {
+  outline: none;
+}
+
+.doneStamp {
+  flex: none;
+  font-family: var(--f-mono), monospace;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+  border: 2px solid currentColor;
+  border-radius: 8px 6px 9px 7px / 7px 9px 6px 8px;
+  padding: 7px 12px 6px;
+  rotate: -5deg;
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .doneStamp {
+    animation: stampIn var(--spring-bouncy-duration) var(--spring-bouncy) 120ms both;
+  }
+}
+
+.doneNote {
+  flex: 1 1 200px;
+  margin: 0;
+  font-family: var(--f-hand), cursive;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--cd-criminalist);
+}
+
+.ticketFoot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+}
+
+.later {
+  font-family: var(--f-text), sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink-2);
+  padding: 10px 16px;
+  border-radius: 1000px;
+  border: 1.5px solid var(--rule);
+  transition:
+    color var(--dur-micro) ease,
+    border-color var(--dur-micro) ease,
+    transform var(--dur-ui) var(--spring-soft);
+}
+
+.later:hover {
+  color: var(--ink);
+  border-color: var(--ink-2);
+  transform: translateY(-1px);
+}
+
+.later:active {
+  transform: scale(0.96);
+}
+
+.meta {
+  flex: 1 1 260px;
+  margin: 0;
+  font-family: var(--f-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* ---------- АДАПТИВ ---------- */
+
+/* Узкий экран: штамп переезжает под заголовок, встаёт по центру */
+@media (max-width: 560px) {
+  .head {
+    flex-direction: column;
+  }
+
+  .stampWrap {
+    margin: 0.5rem auto 0.1rem;
+  }
+}
+
+/* Низкий экран (телефон в альбоме): без наклона — лист «кладут ровно»,
+   чтобы скролл внутри не косил */
+@media (max-height: 620px) {
+  .card {
+    rotate: 0deg;
+  }
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .wish,
+  .later,
+  .close {
+    transition: none;
+  }
+
+  .dialog::backdrop {
+    transition: none;
+  }
+}

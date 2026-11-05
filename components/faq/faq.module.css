@@ -1,0 +1,97 @@
+/* ---------- FAQ ---------- */
+
+.qaWrap {
+  max-width: 860px;
+}
+
+/*
+ * Заголовок FAQ — каллиграфический голос рассказчика (приём whimsy:
+ * script для FAQ), поэтому чуть крупнее и с меньшим отступом вниз.
+ */
+.qaH2 {
+  margin-bottom: 1.2rem;
+  font-family: var(--f-script), cursive;
+  font-weight: 400;
+  font-size: clamp(2.8rem, 6.5vw, 4.6rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.qa {
+  border-top: 1px solid var(--edge);
+}
+
+.qaItem {
+  border-bottom: 1px solid var(--edge);
+}
+
+.qaBtn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.35rem 0;
+  text-align: left;
+}
+
+.qaQ {
+  font-family: var(--f-text), sans-serif;
+  font-weight: 600;
+  font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  transition: color 0.18s ease;
+}
+
+/* Строка вопроса отвечает на ховер, не только на фокус */
+.qaBtn:hover .qaQ {
+  color: var(--periwinkle);
+}
+
+.qaPlus {
+  flex: none;
+  font-family: var(--f-text), sans-serif;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--periwinkle);
+  transition: transform var(--spring-soft-duration) var(--spring-soft);
+}
+
+.qaAns {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--spring-soft-duration) var(--spring-soft);
+}
+
+.qaOpen .qaAns {
+  grid-template-rows: 1fr;
+}
+
+.qaOpen .qaPlus {
+  transform: rotate(45deg);
+}
+
+.qaAnsInner {
+  overflow: hidden;
+}
+
+.qaAnsInner p {
+  margin: 0;
+  padding: 0 0 1.5rem;
+  max-width: 60ch;
+  font-family: var(--f-text), sans-serif;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--mist);
+}
+
+/* ---------- ПОКОЙ (prefers-reduced-motion) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .qaAns,
+  .qaPlus {
+    transition: none;
+  }
+}
