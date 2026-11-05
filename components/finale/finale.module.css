@@ -3,6 +3,9 @@
 .play {
   position: relative;
   padding: clamp(5.5rem, 13vw, 10rem) 6vw 2rem;
+  /* Таймлайн входа секции: финальный шов-волна (сосед сверху) рисует
+     свою линию по нему — к концу скролла линия гарантированно дописана */
+  view-timeline-name: --finsec;
   background:
     radial-gradient(52% 38% at 50% 10%, hsl(217 91% 71% / 0.07), transparent 72%),
     radial-gradient(40% 30% at 78% 34%, hsl(258 89% 76% / 0.05), transparent 74%),
@@ -30,7 +33,7 @@
  */
 .mascot {
   position: relative;
-  width: clamp(120px, 24vw, 200px);
+  width: clamp(140px, 28vw, 240px);
   margin: 0 auto -0.4rem;
 }
 
@@ -38,6 +41,9 @@
   display: block;
   width: 100%;
   height: auto;
+  /* резерв высоты до загрузки (loading=lazy): без этого финал
+     подрастал на ~291px постфактум и двигал заголовок */
+  aspect-ratio: 1204 / 1462;
   /* срез пояса растворяется в ночь — от середины торса к нулю */
   -webkit-mask-image: linear-gradient(180deg, black 72%, transparent 97%);
   mask-image: linear-gradient(180deg, black 72%, transparent 97%);

@@ -20,12 +20,13 @@
 /* Блок: ночная карточка. Вход и ховер — один список переходов
  * (перекрывает .rv целиком, поэтому opacity — здесь). Задержка
  * входа — через --rv, после прихода .in гаснет: ховер не ждёт
- * каскада (урок №4 джиттера). */
+ * каскада (урок №4 джиттера). Фон — longhand: поверх ложатся
+ * паттерны из shared (background-image), shorthand их бы стирал. */
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--bg-2);
+  background-color: var(--bg-2);
   border: 1px solid var(--edge);
   border-radius: 18px;
   padding: clamp(1rem, 1.8vw, 1.3rem);

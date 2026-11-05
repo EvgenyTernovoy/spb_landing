@@ -106,9 +106,10 @@ export default function Case() {
         </header>
 
         <div className={styles.board}>
-          {/* ОСМОТР — ночная карта квартала, панорамой на всю ширину */}
+          {/* ОСМОТР — ночная карта квартала, панорамой на всю ширину.
+              Паттерн — чертёжная сетка: миллиметровка плана квартала */}
           <article
-            className={`${styles.card} ${styles.cardMap} ${shared.rv}`}
+            className={`${styles.card} ${styles.cardMap} ${shared.patternGrid} ${shared.rv}`}
             style={{ "--tint": "var(--periwinkle)", "--rv": "0ms", "--pop": "160ms" } as CSSProperties}
           >
             <div className={styles.mapText}>
@@ -156,9 +157,9 @@ export default function Case() {
             </svg>
           </article>
 
-          {/* ВЕЩДОКИ */}
+          {/* ВЕЩДОКИ — паттерн-горошек: рассыпанные по столу улики */}
           <article
-            className={`${styles.card} ${styles.cardClues} ${shared.rv}`}
+            className={`${styles.card} ${styles.cardClues} ${shared.patternDots} ${shared.rv}`}
             style={{ "--tint": "var(--pink)", "--rv": "90ms", "--pop": "260ms" } as CSSProperties}
           >
             <div className={styles.cardHead}>
@@ -174,9 +175,9 @@ export default function Case() {
             </p>
           </article>
 
-          {/* ДОПРОС */}
+          {/* ДОПРОС — штриховка: свет настольной лампы сквозь жалюзи */}
           <article
-            className={`${styles.card} ${styles.cardCrew} ${shared.rv}`}
+            className={`${styles.card} ${styles.cardCrew} ${shared.patternHatch} ${shared.rv}`}
             style={{ "--tint": "var(--steel)", "--rv": "180ms", "--pop": "360ms" } as CSSProperties}
           >
             <div className={styles.cardHead}>
@@ -190,9 +191,9 @@ export default function Case() {
             <p className={styles.sub}>у каждого свои секреты и ложь</p>
           </article>
 
-          {/* ХРОНОМЕТРАЖ */}
+          {/* ХРОНОМЕТРАЖ — лучи: веер прожектора над ночным кварталом */}
           <article
-            className={`${styles.card} ${styles.cardTime} ${shared.rv}`}
+            className={`${styles.card} ${styles.cardTime} ${shared.patternRays} ${shared.rv}`}
             style={{ "--tint": "var(--lavender)", "--rv": "270ms", "--pop": "460ms" } as CSSProperties}
           >
             <div className={styles.cardHead}>
@@ -206,9 +207,9 @@ export default function Case() {
             <p className={styles.sub}>время расследования ограничено</p>
           </article>
 
-          {/* ЭКИПАЖ */}
+          {/* ЭКИПАЖ — паттерн-горошек: конфетти собранной команды */}
           <article
-            className={`${styles.card} ${styles.cardParty} ${shared.rv}`}
+            className={`${styles.card} ${styles.cardParty} ${shared.patternDots} ${shared.rv}`}
             style={{ "--tint": "var(--periwinkle)", "--rv": "360ms", "--pop": "560ms" } as CSSProperties}
           >
             <div className={styles.cardHead}>

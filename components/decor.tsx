@@ -78,6 +78,41 @@ export function Seam({
 }
 
 /*
+ * ФИНАЛЬНЫЙ ШОВ «дорога собралась» — по мотивам BigDivider whimsy
+ * (переход в их purchase-секцию): перед финалом волна становится крупнее
+ * и выразительнее рядовых швов. У whimsy один путь рисуют четыре раза
+ * (аура-подложка, тусклая линия, блокер цвета фона, рисующаяся линия);
+ * мы берём ту же анатомию втроём и в своей палитре: широкое зарево,
+ * тусклый трек-подсказка и рисующийся при скролле росчерк — все три
+ * несут journey-градиент (periwinkle→pink→lavender), вся дорога
+ * страницы стекает в финал. Геометрия своя: шесть ленивых бугров
+ * разной высоты, hand-placed, не синусоида.
+ */
+const FINALE_SEAM_D =
+  "M0 52 C110 50 160 24 250 22 C340 20 370 54 460 56 C550 58 585 14 675 12 " +
+  "C765 10 800 46 890 48 C965 50 1000 22 1080 22 C1160 22 1195 58 1280 60 " +
+  "C1345 61 1400 44 1440 42";
+
+export function FinaleSeam() {
+  return (
+    <div className={shared.finSeam} aria-hidden="true">
+      <svg className={shared.seamSvg} viewBox="0 0 1440 80" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="finJourney" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1440" y2="0">
+            <stop offset="0" stopColor="var(--periwinkle)" />
+            <stop offset="0.55" stopColor="var(--pink)" />
+            <stop offset="1" stopColor="var(--lavender)" />
+          </linearGradient>
+        </defs>
+        <path className={shared.finAura} pathLength={100} d={FINALE_SEAM_D} stroke="url(#finJourney)" />
+        <path className={shared.finTrack} pathLength={100} d={FINALE_SEAM_D} stroke="url(#finJourney)" />
+        <path className={shared.finLine} pathLength={100} d={FINALE_SEAM_D} stroke="url(#finJourney)" />
+      </svg>
+    </div>
+  );
+}
+
+/*
  * Бегунок-сквиггл (рецепт whimsy №2, masked-runner) — фланг финального
  * заголовка, как «Register Now!» у whimsy. Волна — белый штрих внутри
  * mask; под ним два прямоугольника: постель с градиентом пути

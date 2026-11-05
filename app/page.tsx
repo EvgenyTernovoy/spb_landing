@@ -12,7 +12,7 @@
  * в бандле — shared первым, дальше секции по порядку страницы.
  */
 import shared from "@/components/shared.module.css";
-import { Seam } from "@/components/decor";
+import { FinaleSeam, Seam } from "@/components/decor";
 import TopBar from "@/components/top-bar/TopBar";
 import Hero from "@/components/hero/Hero";
 import LoreLine from "@/components/lore/LoreLine";
@@ -55,8 +55,9 @@ export default function LandingPage() {
       <Seam hue="var(--pink)" variant={0} />
       {/* 07. FAQ */}
       <Faq />
-      {/* Последний шов несут все три hue — весь путь стекает в финал */}
-      <Seam hue="var(--periwinkle)" variant={1} journey />
+      {/* Последний шов крупнее остальных — дорога собралась в финал
+          (по мотивам BigDivider whimsy, в нашем journey-градиенте) */}
+      <FinaleSeam />
       {/* 08. ФИНАЛЬНЫЙ CTA */}
       <Finale />
       </WishlistProvider>

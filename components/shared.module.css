@@ -67,6 +67,15 @@
   /* 6:1 на бумаге досье (было #c2410c — 4.3:1, мало для 9.5px) */
   --cd-thief: #9a3412;
 
+  /*
+   * Именованный view-таймлайн финальной секции (объявлен на .play
+   * в finale.module.css). Область видимости поднята на страницу, чтобы
+   * финальный шов-волна — сосед секции — мог черпать из него время
+   * (тонкая полоса шва стоит слишком близко к концу страницы, её
+   * собственная exit-фаза недостижима при доскролле до конца).
+   */
+  timeline-scope: --finsec;
+
   /* Тени тонированы в фон (подход whimsy: --shadow-color = hue земли) */
   --shadow-color: 222 47% 9%;
   --shadow-low: 0 0.5px 1px hsl(var(--shadow-color) / 0.5),
@@ -447,6 +456,73 @@
   color: var(--mist-2);
 }
 
+/* ---------- ПАТТЕРНЫ КАРТОЧЕК ---------- */
+
+/*
+ * Ненавязчивые фоновые паттерны ночных карточек. Пример — блок тарифов
+ * whimsy-страницы курса (section[1]/div[2] в слепке): горошек бумажных
+ * карточек и конический «солнечный» верх Ultimate-карты — тон в тон,
+ * много тише контента. Четыре семьи по мотивам: горошек, штриховка,
+ * чертёжная сетка, лучи прожектора.
+ *
+ * Классы — надстройка над карточкой: красят только background-image,
+ * фоном остаётся --bg-2 (в секциях карточки специально объявлены
+ * longhand background-color — shorthand стёр бы паттерн при любом
+ * порядке бандла). Оттенок паттерна — цвет карточки --tint (инлайн),
+ * поэтому каждый звучит в своей краске. Прозрачности 7–18%: вблизи
+ * паттерн читается, издали карточка просто чуть «текстурнее» ночи.
+ */
+
+/* Горошек — классика бумажных карточек whimsy; у нас — конфетти вещдоков */
+.patternDots {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--tint, var(--periwinkle)) 18%, transparent) 1.1px,
+    transparent 1.3px
+  );
+  background-size: 16px 16px;
+}
+
+/* Штриховка — гравюрный штрих под углом: свет сквозь жалюзи допроса */
+.patternHatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--tint, var(--steel)) 7%, transparent) 0 1px,
+    transparent 1px 8px
+  );
+}
+
+/* Сетка — миллиметровка чертежа: план квартала на карточке-осмотре */
+.patternGrid {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--tint, var(--periwinkle)) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tint, var(--periwinkle)) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 22px 22px;
+}
+
+/*
+ * Лучи — тихий родственник «солнечного» конуса Ultimate-карты whimsy:
+ * веер прожектора, льющийся на карточку сверху. Второй слой (первый
+ * в списке) — раструб в цвет фона карточки: гасит лучи к низу, чтобы
+ * веер не добегал до текста (маска не годится — режет и контент).
+ * Сектор 6° через 7°, от 177° — центральный луч точно вниз по оси.
+ */
+.patternRays {
+  background-image:
+    linear-gradient(180deg, transparent 34%, var(--bg-2) 82%),
+    repeating-conic-gradient(
+      from 177deg at 50% -18%,
+      color-mix(in srgb, var(--tint, var(--lavender)) 10%, transparent) 0 6deg,
+      transparent 6deg 13deg
+    );
+}
+
 /* ---------- БЕГУНОК ФИНАЛА (рецепт №2, masked-runner) ---------- */
 
 /*
@@ -547,6 +623,46 @@
   stroke: var(--wave);
 }
 
+/* ---------- ФИНАЛЬНЫЙ ШОВ ---------- */
+
+/*
+ * Крупная волна перед «Город ждёт» (по мотивам BigDivider whimsy):
+ * полоса выше рядовых швов, геометрия — в decor.tsx (FinaleSeam).
+ * Три слоя на одном пути: зарево (широкий полупрозрачный штрих с
+ * лёгким блюром — свет дороги), трек-подсказка и рисующийся росчерк.
+ * Градиент у всех общий (id finJourney), поэтому слои ложатся точно
+ * друг на друга по цвету.
+ */
+.finSeam {
+  position: relative;
+  z-index: 2;
+  height: clamp(56px, 6.5vw, 88px);
+  margin-block: calc(clamp(56px, 6.5vw, 88px) / -2);
+  pointer-events: none;
+}
+
+.finAura,
+.finTrack,
+.finLine {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.finAura {
+  stroke-width: 9;
+  opacity: 0.22;
+  filter: blur(2.5px);
+}
+
+.finTrack {
+  stroke-width: 3.2;
+  opacity: 0.3;
+}
+
+.finLine {
+  stroke-width: 4.5;
+}
+
 /* ---------- СКРОЛЛ-ТАЙМЛАЙН ПОДЧЁРКИВАНИЙ ---------- */
 
 @keyframes trace {
@@ -583,6 +699,25 @@
       animation-fill-mode: both;
       animation-timeline: view();
       animation-range: entry 30% exit 45%;
+    }
+
+    /*
+     * Росчерк финального шва черпает время из таймлайна САМОЙ секции
+     * финала (--finsec, см. .play и timeline-scope на .page), а не из
+     * тонкой полосы: полоса стоит слишком близко к концу страницы и её
+     * exit-фаза физически недостижима — при доскролле до конца линия
+     * оставалась недорисованной. Секция же полностью входит в кадр
+     * ровно к концу скролла, поэтому линия гарантированно дописана.
+     * 100 1000 + 103 — без «огоньков» на концах до входа в диапазон.
+     */
+    .finLine {
+      stroke-dasharray: 100 1000;
+      stroke-dashoffset: 103;
+      animation-name: trace;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --finsec;
+      animation-range: entry 15% entry 75%;
     }
   }
 }

@@ -11,33 +11,47 @@ import styles from "./audience.module.css";
  * Эмодзи из таблички переписаны штриховыми иконками в цвете карточки:
  * сердце с лупой, маска, наушники, тройка. Каждая иконка — рецепт
  * whimsy №1 в миниатюре: штрихи рисуют себя на скролле (pathLength=100).
+ * Паттерн — фоновая текстура визитки из shared (горошек/лучи/сетка/
+ * штриховка), тихо звучит в цвете карточки (--tint).
  */
 const AUDIENCE = [
   {
     icon: "pair",
     tint: "var(--pink)",
+    pattern: "dots",
     who: "Парам",
     pitch: "«Свидание-расследование вместо сериала»",
   },
   {
     icon: "party",
     tint: "var(--lavender)",
+    pattern: "rays",
     who: "Компаниям",
     pitch: "«Игра всегда под рукой»",
   },
   {
     icon: "fans",
     tint: "var(--periwinkle)",
+    pattern: "grid",
     who: "True crime фанатам",
     pitch: "«Из слушателя — в детектива»",
   },
   {
     icon: "team",
     tint: "var(--steel)",
+    pattern: "hatch",
     who: "Коллегам",
     pitch: "«Никто не взял настолки? Не проблема»",
   },
 ] as const;
+
+/* Фоновые паттерны визиток — классы из shared (см. блок «ПАТТЕРНЫ») */
+const PATTERNS: Record<(typeof AUDIENCE)[number]["pattern"], string> = {
+  dots: shared.patternDots,
+  rays: shared.patternRays,
+  grid: shared.patternGrid,
+  hatch: shared.patternHatch,
+};
 
 /* Штриховые иконки 24×24: stroke 1.6, round caps — как секундомер «Сценария» */
 const ICONS: Record<(typeof AUDIENCE)[number]["icon"], ReactNode> = {
@@ -116,7 +130,7 @@ export default function Audience() {
               {/* Статья .card — неподвижная зона ховера и носитель входа
                   (задержка каскада живёт только здесь, ховеров на ней
                   нет); вся жизнь визитки — на внутреннем .cardIn */}
-              <div className={styles.cardIn}>
+              <div className={`${styles.cardIn} ${PATTERNS[a.pattern]}`}>
                 <span className={styles.icon} aria-hidden="true">
                   <svg
                     viewBox="0 0 24 24"
