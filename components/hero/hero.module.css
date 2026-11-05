@@ -53,8 +53,10 @@
     radial-gradient(52% 40% at 18% 34%, hsl(215 20% 72% / 0.12), transparent 72%),
     linear-gradient(
       to top,
-      hsl(222 47% 9% / 0.97) 10%,
-      hsl(222 47% 9% / 0.72) 40%,
+      /* низ сходится к 11% lightness (= --bg #0f172a): 9% делал кромку
+         героя темнее страницы — на стыке с лором лежала тёмная линия */
+      hsl(222 47% 11% / 0.97) 10%,
+      hsl(222 47% 11% / 0.72) 40%,
       hsl(222 47% 9% / 0.16) 72%,
       hsl(222 47% 9% / 0.42) 100%
     );
@@ -66,8 +68,8 @@
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(to bottom, hsl(222 47% 9% / 0.32), hsl(222 47% 9% / 0.18) 40%, hsl(222 47% 9% / 0.5)),
-  hsl(222 47% 9% / 0.2);
+    linear-gradient(to bottom, hsl(222 47% 9% / 0.32), hsl(222 47% 9% / 0.18) 40%, hsl(222 47% 11% / 0.5)),
+  hsl(222 47% 11% / 0.2);
   pointer-events: none;
 }
 
@@ -122,47 +124,149 @@
 }
 
 /*
- * Буквы заголовка: каждая входит своей пружиной, чуть повернувшись, —
- * заголовок «собирается», как в анимации заголовков whimsy.
+ * Нуар-титул: заголовок как вывеска на ночном фасаде. «МИСТИЧЕСКИЙ» —
+ * шильда с разрядкой и линиями по бокам, «ПЕТЕРБУРГ» — неоновая трубка:
+ * стеклянно-белая заливка + слои холодного свечения (text-shadow).
+ * Пружинный вход whimsy заменён «зажиганием»: буквы-секции вспыхивают
+ * по одной, как трубки вывески при подаче питания.
  */
-.h1Lt {
-  display: inline-block;
-  animation: riseL var(--spring-duration) var(--spring) both;
-  animation-delay: calc(0.1s + var(--i, 0) * 26ms);
+.h1Line {
+  display: block;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2.2vw, 1.35rem);
+  line-height: 1;
+  letter-spacing: 0.38em;
+  margin-bottom: clamp(12px, 1.6vw, 20px);
+  color: var(--mist);
+  white-space: nowrap;
 }
 
-@keyframes riseL {
-  from {
-    opacity: 0;
-    transform: translateY(0.45em) rotate(3deg);
-  }
+/* Линии-штанги по бокам шильды, как на вывесках ар-деко */
+.h1Line::before,
+.h1Line::after {
+  content: "";
+  display: inline-block;
+  width: clamp(18px, 4.5vw, 56px);
+  height: 1.5px;
+  margin: 0 clamp(10px, 1.5vw, 18px);
+  transform: translateY(-0.36em); /* на середину высоты прописных */
+  background: linear-gradient(
+    to right,
+    transparent,
+    hsl(200 60% 66% / 0.55),
+    transparent
+  );
+  animation: rise var(--spring-duration) var(--spring) 0.1s both;
 }
 
 /*
- * «Петербург»: строка поднимается пружиной целиком, город — svg-текст
- * с градиентной заливкой (fill="url(#mp-city-grad)"), как заголовок
- * whimsy. Заливка svg не зависит от background-clip — анимации не ломают.
+ * «ПЕТЕРБУРГ» — неон. По умолчанию свет холодный, нуарный: кадр ч/б,
+ * вывеска горит синим. Рывок цепочки включает «цвет» (.heroLit):
+ * фото проявляется, неон наливается магическим сиреневым. Переход —
+ * интерполяция списков text-shadow одинаковой формы.
  */
 .h1Line2 {
   position: relative;
   display: block;
-  animation: rise var(--spring-duration) var(--spring) 0.12s both;
+  font-weight: 700;
+  color: #e9f1ff;
+  text-shadow:
+    0 0 0.035em hsl(217 91% 82% / 0.9),
+    0 0 0.12em hsl(217 91% 66% / 0.5),
+    0 0 0.34em hsl(217 91% 58% / 0.33),
+    0 0 0.75em hsl(218 90% 52% / 0.16);
+  transition:
+    color 650ms var(--ease),
+    text-shadow 650ms var(--ease);
 }
 
-.h1Line {
-  display: block;
+.heroLit .h1Line2 {
+  color: #f4eeff;
+  text-shadow:
+    0 0 0.035em hsl(266 100% 88% / 0.95),
+    0 0 0.12em hsl(262 92% 76% / 0.55),
+    0 0 0.34em hsl(258 90% 68% / 0.35),
+    0 0 0.75em hsl(256 90% 62% / 0.18);
 }
 
-.h1CitySvg {
-  display: block;
-  width: 100%;
-  height: 1em;
-  overflow: visible;
+/*
+ * Буквы-трубки: каждая «зажигается» своим серпом вспышек. Разбег задаёт
+ * --i из Hero — сначала шильда, потом город, сверху вниз.
+ */
+.h1Lt {
+  display: inline-block;
+  animation: ignite 0.55s linear both;
+  animation-delay: calc(0.15s + var(--i, 0) * 26ms);
 }
 
-.h1City {
-  font-weight: 800;
-  letter-spacing: -0.02em;
+/* У «Б» плохой контакт: раз в ~7 секунд трубка вздрагивает */
+.h1Flick {
+  animation:
+    ignite 0.55s linear calc(0.15s + var(--i, 0) * 26ms) both,
+    tubeFlicker 7s linear 3.2s infinite;
+}
+
+@keyframes ignite {
+  0%, 38% { opacity: 0; }
+  46% { opacity: 0.9; }
+  52% { opacity: 0.25; }
+  62% { opacity: 1; }
+  68% { opacity: 0.45; }
+  80%, 100% { opacity: 1; }
+}
+
+@keyframes tubeFlicker {
+  0%, 39% { opacity: 1; }
+  39.5% { opacity: 0.55; }
+  40.5% { opacity: 1; }
+  88% { opacity: 1; }
+  88.5% { opacity: 0.3; }
+  89.2% { opacity: 0.9; }
+  90.2% { opacity: 0.25; }
+  91.2% { opacity: 0.85; }
+  92%, 100% { opacity: 1; }
+}
+
+/*
+ * Ореол вывески: неон подсвечивает туман вокруг титула. Холодный синий
+ * по умолчанию; при включённом «цвете» hue-rotate уводит в сиреневый.
+ * Дышит — свечение едва колышется, как от сквозняка.
+ */
+.h1::before {
+  content: "";
+  position: absolute;
+  inset: -0.55em -0.6em;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    hsl(214 94% 64% / 0.16),
+    hsl(214 94% 64% / 0.05) 55%,
+    transparent 78%
+  );
+  animation:
+    haloIn 1.4s var(--ease) 0.45s both,
+    haloBreath 9s ease-in-out 2.2s infinite;
+  transition: filter 700ms var(--ease);
+}
+
+.heroLit .h1::before {
+  filter: hue-rotate(52deg) brightness(1.12);
+}
+
+@keyframes haloIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes haloBreath {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
 }
 
 /* Золотой росчерк под «Петербургом»: рисуется после букв (приём Title whimsy) */
@@ -210,7 +314,10 @@
   max-width: 46ch;
 }
 
-/* «Друзья.» — синий игры, «Одна тайна.» — магический сиреневый */
+/*
+ * Цветные слова подзаголовка: «Онлайн-детектив» — синий игры,
+ * «браузере» — магический сиреневый, связка «в» — туманом.
+ */
 .subB {
   font-weight: 600;
   color: var(--periwinkle);
@@ -276,7 +383,7 @@
 .cord {
   position: absolute;
   left: calc(93% - 28px);
-  top: 1.78em;
+  top: 1.14em; /* кончик росчерка: шильда + строка города ≈ 1.3em высоты h1 */
   z-index: 2; /* выше соседей по heroContent: у .sub и кнопок заполненные анимации rise → свои stacking-контексты в порядке DOM */
   width: 56px; /* зона попадания пальца/курсора вокруг цепочки */
   padding: 8px 0;
@@ -608,13 +715,13 @@
   }
 
   /*
-   * Узкий экран: строка .sub шире заголовка — цепочку сдвигаем к краю,
-   * чтобы бусины висели правее текста, а не перед «Одна тайна.».
+   * Узкий экран: заголовок узкий, под ним сразу .sub и кнопки — цепочку
+   * сдвигаем к краю, чтобы бусины висели правее текста, а не перед ним.
    */
   .cord {
     left: auto;
     right: -13px;
-    top: 1.72em;
+    top: 1.2em;
   }
 
   .dim {
@@ -646,7 +753,14 @@
   .a4,
   .a5,
   .h1Lt,
-  .h1Line2 {
+  .h1Flick,
+  .h1Line::before,
+  .h1Line::after {
+    animation: none;
+  }
+
+  /* Неон горит ровно: без зажигания, ореол не дышит */
+  .h1::before {
     animation: none;
   }
 

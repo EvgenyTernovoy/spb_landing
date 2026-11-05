@@ -146,14 +146,27 @@ function PullCord({
   );
 }
 
-/* Буквы заголовка: каждая — отдельный span, входит своей пружиной */
-function Letters({ word, base = 0 }: { word: string; base?: number }) {
+/*
+ * Буквы заголовка: каждая — секция неона, «зажигается» своей вспышкой.
+ * flicker — индекс барахлящей буквы (плохой контакт в трубке).
+ */
+function Letters({
+  word,
+  base = 0,
+  flicker = -1,
+}: {
+  word: string;
+  base?: number;
+  flicker?: number;
+}) {
   return (
     <>
       {word.split("").map((ch, i) => (
         <span
           key={i}
-          className={styles.h1Lt}
+          className={
+            i === flicker ? `${styles.h1Lt} ${styles.h1Flick}` : styles.h1Lt
+          }
           style={{ "--i": base + i } as CSSProperties}
         >
           {ch}
@@ -608,54 +621,17 @@ export default function Hero() {
       <motion.div className={styles.heroContent} style={parallax(yTitle)}>
         <h1 className={styles.h1}>
           <span className={shared.srOnly}>Мистический Петербург</span>
+          {/* Шильда вывески: разрядка + линии по бокам (ар-деко) */}
           <span className={styles.h1Line} aria-hidden="true">
-            <Letters word="Мистический" />
+            <Letters word="МИСТИЧЕСКИЙ" />
           </span>
+          {/*
+           * Город — неоновая трубка: буквы зажигаются по одной, «Б» барахлит.
+           * Холодный синий по умолчанию; рывок цепочки (.heroLit) наливает
+           * неон магическим сиреневым вместе с проявкой кадра.
+           */}
           <span className={styles.h1Line2} aria-hidden="true">
-            {/*
-             * Город — svg-текст с градиентной заливкой, как заголовок whimsy:
-             * fill="url(#…)" не зависит от background-clip и анимаций.
-             */}
-            <svg className={styles.h1CitySvg}>
-              <defs>
-                {/*
-                 * Градиент города — фиолетовый в белый, 45° (вектор снизу-слева
-                 * вверх-вправо). Нижний пол ограничен #8f39f9: темнее —
-                 * контраст к ночи #0f172a падает ниже 3:1 (крупный текст).
-                 */}
-                <linearGradient id="mp-city-grad" x1="0" y1="1" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#8f39f9" />
-                  <stop offset="5%" stopColor="#9b42fa" />
-                  <stop offset="10%" stopColor="#a446fb" />
-                  <stop offset="14%" stopColor="#ac4bfb" />
-                  <stop offset="19%" stopColor="#b44ffc" />
-                  <stop offset="23%" stopColor="#bc53fd" />
-                  <stop offset="27%" stopColor="#c458fd" />
-                  <stop offset="31%" stopColor="#cb5dfe" />
-                  <stop offset="35%" stopColor="#d466ff" />
-                  <stop offset="39%" stopColor="#d875ff" />
-                  <stop offset="43%" stopColor="#de85ff" />
-                  <stop offset="47%" stopColor="#e294ff" />
-                  <stop offset="51%" stopColor="#e79eff" />
-                  <stop offset="56%" stopColor="#ecadff" />
-                  <stop offset="60%" stopColor="#f0bdff" />
-                  <stop offset="65%" stopColor="#f3c7ff" />
-                  <stop offset="70%" stopColor="#f6d6ff" />
-                  <stop offset="75%" stopColor="#fae6ff" />
-                  <stop offset="83%" stopColor="#fcf0ff" />
-                  <stop offset="100%" stopColor="#ffffff" />
-                </linearGradient>
-              </defs>
-              <text
-                className={styles.h1City}
-                x="50%"
-                y="0.78em"
-                textAnchor="middle"
-                fill="url(#mp-city-grad)"
-              >
-                Петербург
-              </text>
-            </svg>
+            <Letters word="ПЕТЕРБУРГ" base={11} flicker={5} />
             <svg className={styles.h1Under} viewBox="0 0 440 26" preserveAspectRatio="none">
               <path pathLength={100} d="M6 14 C 110 26, 250 2, 434 12" />
             </svg>
@@ -670,13 +646,17 @@ export default function Hero() {
             cordRef={cordRef}
           />
         </h1>
+        {/*
+         * Подзаголовок с цветными словами, как в старой строке: акценты
+         * игры — синий и сиреневый — на смысловых словах, «в» — туманом.
+         */}
         <p className={`${styles.sub} ${styles.a2}`}>
-          Браузер. <b className={styles.subB}>Друзья.</b> Один вечер.{" "}
-          <b className={styles.subP}>Одна тайна.</b>
+          <b className={styles.subB}>Онлайн-детектив</b> в{" "}
+          <b className={styles.subP}>браузере</b>
         </p>
         <div className={`${styles.ctaRow} ${styles.a3}`}>
           <a className={shared.cta} href="#play">Играть</a>
-          <a className={shared.ctaGhost} href="#case">Что внутри</a>
+          <a className={shared.ctaGhost} href="#demo">Что внутри</a>
         </div>
         {/* Рукописная пометка: куда нажать (приём whimsy) */}
         <div className={`${styles.anno} ${styles.a4}`} aria-hidden="true">

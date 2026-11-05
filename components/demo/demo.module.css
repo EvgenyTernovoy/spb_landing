@@ -86,13 +86,19 @@
   rotate: -2deg;
 }
 
-/* Тонкий луч за телефоном — два фонаря: periwinkle и pink */
+/*
+ * Тонкий луч за телефоном — два фонаря: periwinkle и pink. Радиус
+ * каждого — closest-side: луч гаснет строго ДО кромки собственного
+ * бокса (радиус = расстояние до ближайшей стороны). Раньше проценты
+ * радиуса не дотягивали до transparent у кромок — свечение резалось
+ * прямой линией и подложка читалась прямоугольником.
+ */
 .lamp {
   position: absolute;
   inset: -22% -8%;
   background:
-    radial-gradient(42% 52% at 68% 22%, hsl(217 91% 71% / 0.14), transparent 70%),
-    radial-gradient(36% 46% at 30% 78%, hsl(258 89% 76% / 0.1), transparent 72%);
+    radial-gradient(closest-side at 68% 22%, hsl(217 91% 71% / 0.15), transparent),
+    radial-gradient(closest-side at 30% 78%, hsl(258 89% 76% / 0.11), transparent);
   z-index: -1;
 }
 
